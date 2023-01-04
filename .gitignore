@@ -127,3 +127,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+yaraQA-issues.txt
+yaraQA-issues.json
+.vscode/settings.json
