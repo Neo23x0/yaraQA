@@ -59,7 +59,8 @@ class YaraQA(object):
       for rule_set in rule_sets:
          for rule in rule_set:
             
-            pprint(rule)
+            if self.debug:
+               pprint(rule)
 
             # Some calculations or compositions used in many loops (performance tweak)
             condition_combined = ' '.join(rule['condition_terms'])
@@ -180,7 +181,7 @@ class YaraQA(object):
       # Print it to the cmdline
       for iid, issue in enumerate(filtered_issues):
          # Print the issue
-         self.log.warning("ID: %d TYPE: %s LEVEL: %s RULE: %s ISSUE: %s ELEMENT: %s" % (
+         self.log.warning("ID: %d TYPE: %s LEVEL: %s RULE: %s ISSUE: %s ELEMENT: %s RECOMMENDATION: %s" % (
             (iid+1),
             issue['type'],
             issue['level'], 
@@ -197,13 +198,14 @@ class YaraQA(object):
             # Loop over issues
             for iid, issue in enumerate(filtered_issues):
                # Print the issue
-               out_fh.write("ID: %d TYPE: %s LEVEL: %s RULE: %s ISSUE: %s ELEMENT: %s\n" % (
+               out_fh.write(
+                  "ID: %d TYPE: %s LEVEL: %s RULE: %s ISSUE: %s ELEMENT: %s RECOMMENDATION: %s\n" % (
                   (iid+1),
                   issue['type'],
                   issue['level'], 
                   issue['rule'],
                   issue['issue'],
-                  issue['element']
+                  issue['element'],
                   issue['recommendation'],
                ))
       # as JSON
