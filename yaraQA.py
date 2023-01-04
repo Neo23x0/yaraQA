@@ -34,7 +34,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', help='Output file that lists the issues', metavar='outfile', default=r'yaraQA-issues.txt')
 
     parser.add_argument('--json', action='store_true', default=False, help='Save the issues as JSON')
-    parser.add_argument('--ignore-performance', action='store_true', default=False, help='Don\'t show rules with possible performance issues')
+    parser.add_argument('--ignore-performance', action='store_true', default=False, help='Suppress performance-related rule issues')
     parser.add_argument('--debug', action='store_true', default=False, help='Debug output')
 
     args = parser.parse_args()

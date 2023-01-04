@@ -29,7 +29,7 @@ optional arguments:
                         Path to input directory (YARA rules folders, separated by space)
   -o outfile            Output file that lists the issues
   --json                Save the issues as JSON
-  --ignore-performance  Don't show rules with performance issues
+  --ignore-performance  Suppress performance-related rule issues
   --debug               Debug output
 ```
 
