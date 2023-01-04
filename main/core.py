@@ -53,22 +53,25 @@ class YaraQA(object):
       re_pdb = re.compile(r'^\\.*\.(pdb|PDB)$')
       re_filepath_section = re.compile(r'^\\.+\\$')
       re_num_of_them = re.compile(r'([\d]) of')
+      re_at_pos = re.compile(r'(\$[a-zA-Z0-9]{1,50}) at ([^\s]+)')
 
       # RULE LOOP ---------------------------------------------------------------
       for rule_set in rule_sets:
          for rule in rule_set:
             
-            # pprint(rule)
+            pprint(rule)
+
+            # Some calculations or compositions used in many loops (performance tweak)
+            condition_combined = ' '.join(rule['condition_terms'])
 
             # Condition test
             # Problem : '2 of them' in condition but rule contains only 1 string
             # Reason  : rule will never match
             if 'strings' in rule:
-               condition_combined = ' '.join(rule['condition_terms'])
-               result_numof = re_num_of_them.search(condition_combined)
-               if result_numof:
-                  num_of = result_numof.group(0)
-                  num = result_numof.group(1)
+               result_num_of = re_num_of_them.search(condition_combined)
+               if result_num_of:
+                  num_of = result_num_of.group(0)
+                  num = result_num_of.group(1)
                   if int(num) > len(rule['strings']):
                            rule_issues.append(
                               {
@@ -77,15 +80,44 @@ class YaraQA(object):
                                  "element": {'condition_segment': num_of, 'num_of_strings': len(rule['strings'])},
                                  "level": "error",
                                  "type": "logic",
+                                 "recommendation": "Fix the condition",
                               }
-                           )        
+                           )
+
+            # String at position test
+            # Problem : $mz = "MZ" condition: $mz at 0
+            # Reason  : the very short string MZ will be searched in a file, which can be huge, causing many matches
+            if 'strings' in rule:
+               if " at 0" in condition_combined:
+                  result_at_pos = re_at_pos.search(condition_combined)
+                  if result_at_pos:
+                     at_pos_string = result_at_pos.group(1)
+                     at_pos_expression = result_at_pos.group(0)
+                     for s in rule['strings']:
+                        if at_pos_string == s['name']:
+                           if ( s['type'] == "text" and len(s['value']) < 3 ) or \
+                           ( s['type'] == "byte" and len(s['value'].replace(' ', '')) < 7 ):
+                              rule_issues.append(
+                                 {
+                                    "rule": rule['rule_name'],
+                                    "issue": "This rule looks for a short string at a particular position. A short string represents a short atom and could be rewritten to an expression using uint(x) at position.",
+                                    "element": {
+                                       'condition_segment': at_pos_expression, 
+                                       'string': s['name'], 
+                                       'value': s['value']
+                                       },
+                                    "level": "warning",
+                                    "type": "performance",
+                                    "recommendation": "",
+                                 }
+                              )
 
             # Short atom test
             # Problem : $ = "ab" ascii fullword
             # Reason  : short atoms can cause longer scan times and blow up memory usage
             if 'strings' in rule:
                for s in rule['strings']:
-                  if ( s['type'] == "text" and len(s['value']) < 3 ) or \
+                  if ( s['type'] == "text" and len(s['value']) < 4 ) or \
                      ( s['type'] == "byte" and len(s['value'].replace(' ', '')) < 9 ):
                            rule_issues.append(
                               {
@@ -94,6 +126,7 @@ class YaraQA(object):
                                  "element": s,
                                  "level": "warning",
                                  "type": "performance",
+                                 "recommendation": "Try to avoid using such short atoms, by e.g. adding a few more bytes to the beginning or the end (e.g. add a binary 0 in front or a space after the string). Every additional byte helps.",
                               }
                            )
 
@@ -114,6 +147,7 @@ class YaraQA(object):
                                  "element": s,
                                  "level": "warning",
                                  "type": "logic",
+                                 "recommendation": "Remove the 'fullword' modifier",
                               }
                            )
 
@@ -128,6 +162,7 @@ class YaraQA(object):
                                  "element": s,
                                  "level": "warning",
                                  "type": "logic",
+                                 "recommendation": "Remove the 'fullword' modifier",
                               }
                            )
 
@@ -151,7 +186,8 @@ class YaraQA(object):
             issue['level'], 
             issue['rule'],
             issue['issue'],
-            issue['element']
+            issue['element'],
+            issue['recommendation'],
          ))
       
       # Write to output file
@@ -168,6 +204,7 @@ class YaraQA(object):
                   issue['rule'],
                   issue['issue'],
                   issue['element']
+                  issue['recommendation'],
                ))
       # as JSON
       if as_json:

@@ -50,3 +50,31 @@ rule Demo_Rule_4_Condition_Never_Matches : APT {
    condition:
       2 of them
 }
+
+rule Demo_Rule_5_Condition_Short_String_At_Pos : APT {
+   meta:
+      description = "Rule that looks for a short string at a particular position"
+      author = "Florian Roth"
+      date = "2023-01-04"
+      reference = "https://github.com/Neo23x0/yaraQA"
+      score = 0
+   strings:
+      $mz = "MZ" ascii
+      $s1 = "dummy,dummy,dummy"
+   condition:
+      $mz at 0 and 1 of them
+}
+
+rule Demo_Rule_6_Condition_Short_Byte_At_Pos : APT {
+   meta:
+      description = "Rule that looks for a short byte string at a particular position"
+      author = "Florian Roth"
+      date = "2023-01-04"
+      reference = "https://github.com/Neo23x0/yaraQA"
+      score = 0
+   strings:
+      $mz = { 4d 5a }
+      $s1 = "dummy,dummy,dummy"
+   condition:
+      $mz at 0 and 1 of them
+}
