@@ -13,6 +13,12 @@ The issues yaraQA tries to detect are e.g.:
 
 I'm going to extend the test set over time. Each minor version will include new features or new tests.
 
+## Install requirements
+
+```bash
+pip install -r requirements.txt
+```
+
 ## Usage
 
 ```bash
