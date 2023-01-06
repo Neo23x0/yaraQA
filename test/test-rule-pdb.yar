@@ -104,3 +104,31 @@ rule Demo_Rule_8_Noob_Rule : APT {
    condition:
       1 of them
 }
+
+rule Demo_Rule_9_Uniform_String : APT {
+   meta:
+      description = "Rule that has strings which contents are very uniform / repetitive. This can cause problems with string matching resulting in 'too many string matches' errors."
+      author = "Florian Roth"
+      date = "2023-01-06"
+      reference = "https://github.com/Neo23x0/yaraQA"
+      score = 0
+   strings:
+      $s1 = "AAAAAAAAAAAAAAAAAAAAAAAAAAA" ascii
+   condition:
+      1 of them
+}
+
+rule Demo_Rule_10_Fullword_Path : APT {
+   meta:
+      description = "Rule that has strings that seem to be a path segment and use fullword."
+      author = "Florian Roth"
+      date = "2023-01-06"
+      reference = "https://github.com/Neo23x0/yaraQA"
+      score = 0
+   strings:
+      $s1 = "\\User.ini" wide fullword
+   condition:
+      1 of them
+}
+
+

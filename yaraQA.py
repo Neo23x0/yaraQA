@@ -9,7 +9,7 @@
 #            Do not install plyara via pip
 #            Use https://github.com/plyara/plyara
 
-__version__ = "0.5"
+__version__ = "0.6"
 
 import os
 import sys
@@ -105,5 +105,9 @@ if __name__ == '__main__':
         # Output file preparation
         outfile = args.o
         # Now show the issues
-        m.printIssues(rule_issues, outfile, int(args.l), args.b, args.ignore_performance)
+        num_printed_issues = m.printIssues(rule_issues, outfile, int(args.l), args.b, args.ignore_performance)
 
+        if num_printed_issues > 0:
+            sys.exit(1)
+
+    sys.exit(0)

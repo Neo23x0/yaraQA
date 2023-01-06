@@ -55,11 +55,12 @@ class YaraQA(object):
       re_filepath_section = re.compile(r'^\\.+\\$')
       re_num_of_them = re.compile(r'([\d]) of')
       re_at_pos = re.compile(r'(\$[a-zA-Z0-9]{1,50}) at ([^\s]+)')
-      re_fw_start_chars = re.compile(r'^[\.\)]')
-      re_fw_end_chars = re.compile(r'[\.\(]$')
+      re_fw_start_chars = re.compile(r'^[\.\)_]')
+      re_fw_end_chars = re.compile(r'[\(\/\\_-]$')
+      re_repeating_chars = re.compile(r'^(.)\1{1,}$')
       # Some lists
       fullword_allowed_1st_segments = [r'\\\\.', r'\\\\device', r'\\\\global', r'\\\\dosdevices', 
-         r'\\\\basenamedobjects', r'\\\\?', r'\\\\%']  # will be applied lower-cased
+         r'\\\\basenamedobjects', r'\\\\?', r'\\\\%', r'.?']  # will be applied lower-cased
 
       # RULE LOOP ---------------------------------------------------------------
       for rule_set in rule_sets:
@@ -128,6 +129,20 @@ class YaraQA(object):
                   # Some vars (performance tweak)
                   string_lower = s['value'].lower()
 
+                  # Repeating characters
+                  if re_repeating_chars.search(s['value']):
+                     rule_issues.append(
+                        {
+                           "rule": rule['rule_name'],
+                           "id": "SV1",
+                           "issue": "The rule uses a string that contains a repeating character, which could lead to 'too many strings' errors on large files.",
+                           "element": s,
+                           "level": 2,
+                           "type": "logic",
+                           "recommendation": "Try to anchor the string with a different character at the beginning or end.",
+                        }
+                     )
+
                   # Noob modifier use
                   if 'modifiers' in s:
                      if 'ascii' in s['modifiers'] and 'wide' in s['modifiers'] and 'nocase' in s['modifiers']:
@@ -175,6 +190,18 @@ class YaraQA(object):
                                  "recommendation": "Remove the 'wide' modifier",
                               }
                            )
+                        if 'wide' in s['modifiers'] and not 'ascii' in s['modifiers']:
+                           rule_issues.append(
+                              {
+                                 "rule": rule['rule_name'],
+                                 "id": "SM6",
+                                 "issue": "The rule uses a PDB string with the modifier 'wide'. PDB strings are always included as ASCII strings. You should use 'ascii' instead.",
+                                 "element": s,
+                                 "level": 3,
+                                 "type": "logic",
+                                 "recommendation": "Replace the 'wide' modifier with 'ascii'",
+                              }
+                           )
 
                   # Fullword string tests
                   # Problem : $ = "\\i386\\mimidrv.pdb" ascii fullword
@@ -185,7 +212,7 @@ class YaraQA(object):
                      if 'fullword' in s['modifiers']:
 
                         # Starts with \\ (path)
-                        if s['value'][0] == r'\\':
+                        if s['value'].startswith(r'\\'):
                            is_allowed = False
                            for allowed_value in fullword_allowed_1st_segments:
                               if string_lower.startswith(allowed_value):
@@ -204,7 +231,12 @@ class YaraQA(object):
                               )
 
                         # Characters at the beginning or end that don't work well with 'fullword'
-                        if re_fw_start_chars.search(s['value']):
+                        if re_fw_start_chars.search(s['value']) and s['type'] == "text":
+                           is_allowed = False
+                           for allowed_value in fullword_allowed_1st_segments:
+                              if string_lower.startswith(allowed_value):
+                                 is_allowed = True
+                           if not is_allowed:
                               rule_issues.append(
                                  {
                                     "rule": rule['rule_name'],
@@ -216,7 +248,7 @@ class YaraQA(object):
                                     "recommendation": "Remove the 'fullword' modifier",
                                  }
                               )
-                        if re_fw_end_chars.search(s['value']):
+                        if re_fw_end_chars.search(s['value']) and s['type'] == "text":
                               rule_issues.append(
                                  {
                                     "rule": rule['rule_name'],
@@ -325,4 +357,6 @@ class YaraQA(object):
       
       with open(outfile, 'w') as out_fh:
          out_fh.write(json.dumps(filtered_issues, indent=4))
+
+      return len(filtered_issues)
 
