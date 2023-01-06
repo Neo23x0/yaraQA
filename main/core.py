@@ -211,7 +211,7 @@ class YaraQA(object):
                                     "id": "SM5",
                                     "issue": "The modifier is 'fullword' but the string seems to start with a character / characters that could be problematic to use with that modifier.",
                                     "element": s,
-                                    "level": "warning",
+                                    "level": 2,
                                     "type": "logic",
                                     "recommendation": "Remove the 'fullword' modifier",
                                  }
