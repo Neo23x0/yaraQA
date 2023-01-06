@@ -9,7 +9,7 @@
 #            Do not install plyara via pip
 #            Use https://github.com/plyara/plyara
 
-__version__ = "0.4"
+__version__ = "0.5"
 
 import os
 import sys
@@ -33,6 +33,7 @@ if __name__ == '__main__':
                         metavar='yara files')
     parser.add_argument('-o', help='Output file that lists the issues', metavar='outfile', default=r'yaraQA-issues.json')
     parser.add_argument('-b', help='Use a issues baseline (issues found and reviewed before) to filter issues', metavar='baseline', default=r'')
+    parser.add_argument('-l', help='Minium level to show (1=informational, 2=warning, 3=critical)', metavar='level', default=1)
 
     parser.add_argument('--ignore-performance', action='store_true', default=False, help='Suppress performance-related rule issues')
     parser.add_argument('--debug', action='store_true', default=False, help='Debug output')
@@ -104,5 +105,5 @@ if __name__ == '__main__':
         # Output file preparation
         outfile = args.o
         # Now show the issues
-        m.printIssues(rule_issues, outfile, args.b, args.ignore_performance)
+        m.printIssues(rule_issues, outfile, int(args.l), args.b, args.ignore_performance)
 

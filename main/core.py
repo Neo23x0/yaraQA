@@ -55,9 +55,11 @@ class YaraQA(object):
       re_filepath_section = re.compile(r'^\\.+\\$')
       re_num_of_them = re.compile(r'([\d]) of')
       re_at_pos = re.compile(r'(\$[a-zA-Z0-9]{1,50}) at ([^\s]+)')
+      re_fw_start_chars = re.compile(r'^[\.\)]')
+      re_fw_end_chars = re.compile(r'[\.\(]$')
       # Some lists
       fullword_allowed_1st_segments = [r'\\\\.', r'\\\\device', r'\\\\global', r'\\\\dosdevices', 
-      r'\\\\basenamedobjects', r'\\\\?', r'\\\\%']  # will be applied lower-cased
+         r'\\\\basenamedobjects', r'\\\\?', r'\\\\%']  # will be applied lower-cased
 
       # RULE LOOP ---------------------------------------------------------------
       for rule_set in rule_sets:
@@ -84,7 +86,7 @@ class YaraQA(object):
                                  "id": "CE1",
                                  "issue": "The rule uses a condition that will never match",
                                  "element": {'condition_segment': num_of, 'num_of_strings': len(rule['strings'])},
-                                 "level": "error",
+                                 "level": 3,
                                  "type": "logic",
                                  "recommendation": "Fix the condition",
                               }
@@ -113,15 +115,13 @@ class YaraQA(object):
                                        'string': s['name'], 
                                        'value': s['value']
                                        },
-                                    "level": "warning",
+                                    "level": 2,
                                     "type": "performance",
                                     "recommendation": "",
                                  }
                               )
 
-            # Short atom test
-            # Problem : $ = "ab" ascii fullword
-            # Reason  : short atoms can cause longer scan times and blow up memory usage
+            # Loop over strings
             if 'strings' in rule:
                for s in rule['strings']:
 
@@ -137,13 +137,15 @@ class YaraQA(object):
                               "id": "NO1",
                               "issue": "The string uses 'ascii', 'wide' and 'nocase' modifier. Are you sure you know what you're doing. Please don't drink and write YARA rules.",
                               "element": s,
-                              "level": "info",
+                              "level": 1,
                               "type": "performance",
                               "recommendation": "Limit the modifiers to what you actually find in the samples.",
                            }
                         )
 
-                  # Short atom
+                  # Short atom test
+                  # Problem : $ = "ab" ascii fullword
+                  # Reason  : short atoms can cause longer scan times and blow up memory usage
                   if ( s['type'] == "text" and len(s['value']) < 4 ) or \
                      ( s['type'] == "byte" and len(s['value'].replace(' ', '')) < 9 ):
                            rule_issues.append(
@@ -152,7 +154,7 @@ class YaraQA(object):
                                  "id": "PA2",
                                  "issue": "The rule contains a string that turns out to be a very short atom, which could cause a reduced performance of the complete rule set or increased memory usage.",
                                  "element": s,
-                                 "level": "warning",
+                                 "level": 2,
                                  "type": "performance",
                                  "recommendation": "Try to avoid using such short atoms, by e.g. adding a few more bytes to the beginning or the end (e.g. add a binary 0 in front or a space after the string). Every additional byte helps.",
                               }
@@ -168,7 +170,7 @@ class YaraQA(object):
                                  "id": "SM1",
                                  "issue": "The rule uses a PDB string with the modifier 'wide'. PDB strings are always included as ASCII strings. The 'wide' keyword is unneeded.",
                                  "element": s,
-                                 "level": "info",
+                                 "level": 1,
                                  "type": "logic",
                                  "recommendation": "Remove the 'wide' modifier",
                               }
@@ -195,7 +197,33 @@ class YaraQA(object):
                                     "id": "SM4",
                                     "issue": "The string seems to look for a segment in a path but uses the 'fullword' modifier, which can lead to a string that doesn't match.",
                                     "element": s,
+                                    "level": 2,
+                                    "type": "logic",
+                                    "recommendation": "Remove the 'fullword' modifier",
+                                 }
+                              )
+
+                        # Characters at the beginning or end that don't work well with 'fullword'
+                        if re_fw_start_chars.search(s['value']):
+                              rule_issues.append(
+                                 {
+                                    "rule": rule['rule_name'],
+                                    "id": "SM5",
+                                    "issue": "The modifier is 'fullword' but the string seems to start with a character / characters that could be problematic to use with that modifier.",
+                                    "element": s,
                                     "level": "warning",
+                                    "type": "logic",
+                                    "recommendation": "Remove the 'fullword' modifier",
+                                 }
+                              )
+                        if re_fw_end_chars.search(s['value']):
+                              rule_issues.append(
+                                 {
+                                    "rule": rule['rule_name'],
+                                    "id": "SM5",
+                                    "issue": "The modifier is 'fullword' but the string seems to end with a character / characters that could be problematic to use with that modifier.",
+                                    "element": s,
+                                    "level": 2,
                                     "type": "logic",
                                     "recommendation": "Remove the 'fullword' modifier",
                                  }
@@ -209,7 +237,7 @@ class YaraQA(object):
                                  "id": "SM2",
                                  "issue": "The rule uses a PDB string with the modifier 'fullword' but it starts with two backslashes and thus the modifier could lead to a dysfunctional rule.",
                                  "element": s,
-                                 "level": "warning",
+                                 "level": 2,
                                  "type": "logic",
                                  "recommendation": "Remove the 'fullword' modifier",
                               }
@@ -223,7 +251,7 @@ class YaraQA(object):
                                  "id": "SM3",
                                  "issue": "The rule uses a string with the modifier 'fullword' but it starts and ends with two backslashes and thus the modifier could lead to a dysfunctional rule.",
                                  "element": s,
-                                 "level": "warning",
+                                 "level": 2,
                                  "type": "logic",
                                  "recommendation": "Remove the 'fullword' modifier",
                               }
@@ -231,13 +259,14 @@ class YaraQA(object):
 
       return rule_issues
 
-   def printIssues(self, rule_issues, outfile, baseline, ignore_performance):
+   def printIssues(self, rule_issues, outfile, min_level, baseline, ignore_performance):
 
       # Apply some filters
       filtered_issues = []
       # Read a baseline 
       baselined_issues = []
       # Counts
+      excluded_count_level = 0
       excluded_count_performance = 0
       excluded_count_baselined = 0
       # Read baselined issues
@@ -248,6 +277,10 @@ class YaraQA(object):
             self.log.info("Read %d issues from the baseline file %s" % (len(baselined_issues), baseline))
       # Now filter the issues
       for issue in rule_issues:
+         # Ignore all rules with level lower than minium level
+         if min_level > issue['level']:
+            excluded_count_level += 1
+            continue
          # Ignore performance issues
          if ignore_performance and issue['type'] == "performance":
             excluded_count_performance += 1
@@ -264,8 +297,9 @@ class YaraQA(object):
          filtered_issues.append(issue)
 
       # Show excluded counts
-      self.log.info("%d rules have been excluded from the output (performance issues: %d, baselined issues: %d)" % 
-                     ((excluded_count_baselined+excluded_count_performance), excluded_count_performance, excluded_count_baselined))
+      total_excluded_count = excluded_count_level + excluded_count_baselined + excluded_count_performance
+      self.log.info("%d rules have been excluded from the output (lower level: %d performance issues: %d, baselined issues: %d)" % 
+                     (total_excluded_count, excluded_count_level, excluded_count_performance, excluded_count_baselined))
 
       # Print info if issues have been found
       if len(filtered_issues) > 0:
