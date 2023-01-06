@@ -79,11 +79,11 @@ rule Demo_Rule_6_Condition_Short_Byte_At_Pos : APT {
       $mz at 0 and 1 of them
 }
 
-rule Demo_Rule_6_Condition_Short_Byte_At_Pos : APT {
+rule Demo_Rule_7_Path_Section_Fullword : APT {
    meta:
-      description = "Rule that looks for a short byte string at a particular position"
+      description = "Rule that looks for a section of a path but uses fullword"
       author = "Florian Roth"
-      date = "2023-01-04"
+      date = "2023-01-06"
       reference = "https://github.com/Neo23x0/yaraQA"
       score = 0
    strings:
@@ -92,11 +92,11 @@ rule Demo_Rule_6_Condition_Short_Byte_At_Pos : APT {
       1 of them
 }
 
-rule Demo_Rule_7_Noob_Rule : APT {
+rule Demo_Rule_8_Noob_Rule : APT {
    meta:
       description = "Rule that has strings with a bunch of modifiers which indicate that the author had no idea what he was doing and just decided to use them all."
       author = "Florian Roth"
-      date = "2023-01-04"
+      date = "2023-01-06"
       reference = "https://github.com/Neo23x0/yaraQA"
       score = 0
    strings:
