@@ -237,6 +237,10 @@ class YaraQA(object):
       filtered_issues = []
       # Read a baseline 
       baselined_issues = []
+      # Counts
+      excluded_count_performance = 0
+      excluded_count_baselined = 0
+      # Read baselined issues
       if baseline:
          with open(baseline) as json_file:
             baselined_issues = json.load(json_file)
@@ -246,16 +250,31 @@ class YaraQA(object):
       for issue in rule_issues:
          # Ignore performance issues
          if ignore_performance and issue['type'] == "performance":
+            excluded_count_performance += 1
             continue
          # Ignore base-lined issues (based on rule name and issue id)
          skip_issue = False
          for bi in baselined_issues:
             if bi['rule'] == issue['rule'] and bi['id'] == issue['id']: 
-               skip_issue = True 
+               skip_issue = True
+               excluded_count_baselined += 1
          if skip_issue:
             continue
          # Otherwise add the issue to the filtered list to be printed
          filtered_issues.append(issue)
+
+      # Show excluded counts
+      self.log.info("%d rules have been excluded from the output (performance issues: %d, baselined issues: %d)" % 
+                     ((excluded_count_baselined+excluded_count_performance), excluded_count_performance, excluded_count_baselined))
+
+      # Print info if issues have been found
+      if len(filtered_issues) > 0:
+         self.log.info("The following issues have been found")
+      else:
+         if baseline:
+            self.log.info("No new issues have been found")
+         else:
+            self.log.info("No issues have been found")
 
       # Print it to the cmdline
       for iid, issue in enumerate(filtered_issues):

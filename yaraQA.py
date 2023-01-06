@@ -101,7 +101,6 @@ if __name__ == '__main__':
 
     # Print rule issues
     if len(rule_issues) > 0:
-        Log.info("The following issues have been found")
         # Output file preparation
         outfile = args.o
         # Now show the issues
