@@ -50,7 +50,8 @@ class YaraQA(object):
       rule_issues = []
 
       # Prepare regular expressions
-      re_pdb = re.compile(r'^\\.*\.(pdb|PDB)$')
+      re_pdb_folder = re.compile(r'^\\.*\.(pdb|PDB)$')
+      re_pdb = re.compile(r'\.(pdb|PDB)$')
       re_filepath_section = re.compile(r'^\\.+\\$')
       re_num_of_them = re.compile(r'([\d]) of')
       re_at_pos = re.compile(r'(\$[a-zA-Z0-9]{1,50}) at ([^\s]+)')
@@ -77,6 +78,7 @@ class YaraQA(object):
                            rule_issues.append(
                               {
                                  "rule": rule['rule_name'],
+                                 "id": "CE1",
                                  "issue": "The rule uses a condition that will never match",
                                  "element": {'condition_segment': num_of, 'num_of_strings': len(rule['strings'])},
                                  "level": "error",
@@ -101,6 +103,7 @@ class YaraQA(object):
                               rule_issues.append(
                                  {
                                     "rule": rule['rule_name'],
+                                    "id": "PA1",
                                     "issue": "This rule looks for a short string at a particular position. A short string represents a short atom and could be rewritten to an expression using uint(x) at position.",
                                     "element": {
                                        'condition_segment': at_pos_expression, 
@@ -123,6 +126,7 @@ class YaraQA(object):
                            rule_issues.append(
                               {
                                  "rule": rule['rule_name'],
+                                 "id": "PA2",
                                  "issue": "The rule contains a string that turns out to be a very short atom, which could cause a reduced performance of the complete rule set or increased memory usage.",
                                  "element": s,
                                  "level": "warning",
@@ -131,19 +135,34 @@ class YaraQA(object):
                               }
                            )
 
-            # Fullword tests
-            # Problem : $ = "\\i386\\mimidrv.pdb" ascii fullword
-            # Reason  : Rules won't match
-            if 'strings' in rule:
-               for s in rule['strings']:
-
-                  # PDB string
+                  # PDB string wide modifier
                   if re_pdb.search(s['value']):
+                     if 'modifiers' in s:
+                        if 'wide' in s['modifiers']:
+                           rule_issues.append(
+                              {
+                                 "rule": rule['rule_name'],
+                                 "id": "SM1",
+                                 "issue": "The rule uses a PDB string with the modifier 'wide'. PDB strings are always included as ASCII strings. The 'wide' keyword is unneeded.",
+                                 "element": s,
+                                 "level": "info",
+                                 "type": "logic",
+                                 "recommendation": "Remove the 'wide' modifier",
+                              }
+                           )
+
+                  # Fullword PDB string tests
+                  # Problem : $ = "\\i386\\mimidrv.pdb" ascii fullword
+                  # Reason  : Rules won't match
+
+                  # PDB string starts with \\ 
+                  if re_pdb_folder.search(s['value']):
                      if 'modifiers' in s:
                         if 'fullword' in s['modifiers']:
                            rule_issues.append(
                               {
                                  "rule": rule['rule_name'],
+                                 "id": "SM2",
                                  "issue": "The rule uses a PDB string with the modifier 'fullword' but it starts with two backslashes and thus the modifier could lead to a dysfunctional rule.",
                                  "element": s,
                                  "level": "warning",
@@ -159,6 +178,7 @@ class YaraQA(object):
                            rule_issues.append(
                               {
                                  "rule": rule['rule_name'],
+                                 "id": "SM3",
                                  "issue": "The rule uses a string with the modifier 'fullword' but it starts and ends with two backslashes and thus the modifier could lead to a dysfunctional rule.",
                                  "element": s,
                                  "level": "warning",
@@ -169,13 +189,30 @@ class YaraQA(object):
 
       return rule_issues
 
-   def printIssues(self, rule_issues, outfile, as_json, ignore_performance):
+   def printIssues(self, rule_issues, outfile, baseline, ignore_performance):
 
       # Apply some filters
       filtered_issues = []
+      # Read a baseline 
+      baselined_issues = []
+      if baseline:
+         with open(baseline) as json_file:
+            baselined_issues = json.load(json_file)
+         if self.debug:
+            self.log.info("Read %d issues from the baseline file %s" % (len(baselined_issues), baseline))
+      # Now filter the issues
       for issue in rule_issues:
+         # Ignore performance issues
          if ignore_performance and issue['type'] == "performance":
             continue
+         # Ignore base-lined issues (based on rule name and issue id)
+         skip_issue = False
+         for bi in baselined_issues:
+            if bi['rule'] == issue['rule'] and bi['id'] == issue['id']: 
+               skip_issue = True 
+         if skip_issue:
+            continue
+         # Otherwise add the issue to the filtered list to be printed
          filtered_issues.append(issue)
 
       # Print it to the cmdline
@@ -191,24 +228,6 @@ class YaraQA(object):
             issue['recommendation'],
          ))
       
-      # Write to output file
-      # as text
-      if not as_json:
-         with open(outfile, 'w') as out_fh:
-            # Loop over issues
-            for iid, issue in enumerate(filtered_issues):
-               # Print the issue
-               out_fh.write(
-                  "ID: %d TYPE: %s LEVEL: %s RULE: %s ISSUE: %s ELEMENT: %s RECOMMENDATION: %s\n" % (
-                  (iid+1),
-                  issue['type'],
-                  issue['level'], 
-                  issue['rule'],
-                  issue['issue'],
-                  issue['element'],
-                  issue['recommendation'],
-               ))
-      # as JSON
-      if as_json:
-         with open(outfile, 'w') as out_fh:
-            out_fh.write(json.dumps(filtered_issues, indent=4))
+      with open(outfile, 'w') as out_fh:
+         out_fh.write(json.dumps(filtered_issues, indent=4))
+

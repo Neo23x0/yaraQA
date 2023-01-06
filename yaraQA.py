@@ -9,7 +9,7 @@
 #            Do not install plyara via pip
 #            Use https://github.com/plyara/plyara
 
-__version__ = "0.2"
+__version__ = "0.3"
 
 import os
 import sys
@@ -31,9 +31,9 @@ if __name__ == '__main__':
     parser.add_argument('-d', action='append', nargs='+', help='Path to input directory '
                                                                '(YARA rules folders, separated by space)',
                         metavar='yara files')
-    parser.add_argument('-o', help='Output file that lists the issues', metavar='outfile', default=r'yaraQA-issues.txt')
+    parser.add_argument('-o', help='Output file that lists the issues', metavar='outfile', default=r'yaraQA-issues.json')
+    parser.add_argument('-b', help='Use a issues baseline (issues found and reviewed before) to filter issues', metavar='baseline', default=r'')
 
-    parser.add_argument('--json', action='store_true', default=False, help='Save the issues as JSON')
     parser.add_argument('--ignore-performance', action='store_true', default=False, help='Suppress performance-related rule issues')
     parser.add_argument('--debug', action='store_true', default=False, help='Debug output')
 
@@ -102,7 +102,8 @@ if __name__ == '__main__':
     # Print rule issues
     if len(rule_issues) > 0:
         Log.info("The following issues have been found")
+        # Output file preparation
         outfile = args.o
-        if args.json:
-            outfile = os.path.splitext(outfile)[0]+'.json'
-        m.printIssues(rule_issues, outfile, args.json, args.ignore_performance)
+        # Now show the issues
+        m.printIssues(rule_issues, outfile, args.b, args.ignore_performance)
+
