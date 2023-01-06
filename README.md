@@ -22,7 +22,7 @@ pip install -r requirements.txt
 ## Usage
 
 ```bash
-usage: yaraQA.py [-h] [-f yara files [yara files ...]] [-d yara files [yara files ...]] [-o outfile] [-b baseline]
+usage: yaraQA.py [-h] [-f yara files [yara files ...]] [-d yara files [yara files ...]] [-o outfile] [-b baseline] [-l level]
                  [--ignore-performance] [--debug]
 
 YARA RULE ANALYZER
@@ -35,24 +35,30 @@ optional arguments:
                         Path to input directory (YARA rules folders, separated by space)
   -o outfile            Output file that lists the issues
   -b baseline           Use a issues baseline (issues found and reviewed before) to filter issues
+  -l level              Minium level to show (1=informational, 2=warning, 3=critical)
   --ignore-performance  Suppress performance-related rule issues
   --debug               Debug output
 ```
 
 ## Try it out
 
-```bash 
+```bash
 python3 yaraQA.py -d ./test/
 ```
 
 Suppress all performance issues and only show detection / logic issues.
-```bash 
+```bash
 python3 yaraQA.py -d ./test/ --ignore-performance
 ```
 
-Use a baseline to only see new issues (not the ones that you've already reviewed). The baseline file is an old JSON output of a reviewed state. 
+Suppress all issues of informational character
+```bash
+python3 yaraQA.py -d ./test/ -level 2
+```
 
-```bash 
+Use a baseline to only see new issues (not the ones that you've already reviewed). The baseline file is an old JSON output of a reviewed state.
+
+```bash
 python3 yaraQA.py -d ./test/ -b yaraQA-reviewed-issues.json
 ```
 
