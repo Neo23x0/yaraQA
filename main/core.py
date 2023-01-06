@@ -55,6 +55,9 @@ class YaraQA(object):
       re_filepath_section = re.compile(r'^\\.+\\$')
       re_num_of_them = re.compile(r'([\d]) of')
       re_at_pos = re.compile(r'(\$[a-zA-Z0-9]{1,50}) at ([^\s]+)')
+      # Some lists
+      fullword_allowed_1st_segments = [r'\\\\.', r'\\\\device', r'\\\\global', r'\\\\dosdevices', 
+      r'\\\\basenamedobjects', r'\\\\?', r'\\\\%']  # will be applied lower-cased
 
       # RULE LOOP ---------------------------------------------------------------
       for rule_set in rule_sets:
@@ -121,6 +124,26 @@ class YaraQA(object):
             # Reason  : short atoms can cause longer scan times and blow up memory usage
             if 'strings' in rule:
                for s in rule['strings']:
+
+                  # Some vars (performance tweak)
+                  string_lower = s['value'].lower()
+
+                  # Noob modifier use
+                  if 'modifiers' in s:
+                     if 'ascii' in s['modifiers'] and 'wide' in s['modifiers'] and 'nocase' in s['modifiers']:
+                        rule_issues.append(
+                           {
+                              "rule": rule['rule_name'],
+                              "id": "NO1",
+                              "issue": "The string uses 'ascii', 'wide' and 'nocase' modifier. Are you sure you know what you're doing. Please don't drink and write YARA rules.",
+                              "element": s,
+                              "level": "info",
+                              "type": "performance",
+                              "recommendation": "Limit the modifiers to what you actually find in the samples.",
+                           }
+                        )
+
+                  # Short atom
                   if ( s['type'] == "text" and len(s['value']) < 4 ) or \
                      ( s['type'] == "byte" and len(s['value'].replace(' ', '')) < 9 ):
                            rule_issues.append(
@@ -151,14 +174,35 @@ class YaraQA(object):
                               }
                            )
 
-                  # Fullword PDB string tests
+                  # Fullword string tests
                   # Problem : $ = "\\i386\\mimidrv.pdb" ascii fullword
                   # Reason  : Rules won't match
 
-                  # PDB string starts with \\ 
-                  if re_pdb_folder.search(s['value']):
-                     if 'modifiers' in s:
-                        if 'fullword' in s['modifiers']:
+                  # Fullword in modifiers
+                  if 'modifiers' in s:
+                     if 'fullword' in s['modifiers']:
+
+                        # Starts with \\ (path)
+                        if s['value'][0] == r'\\':
+                           is_allowed = False
+                           for allowed_value in fullword_allowed_1st_segments:
+                              if string_lower.startswith(allowed_value):
+                                 is_allowed = True
+                           if not is_allowed:
+                              rule_issues.append(
+                                 {
+                                    "rule": rule['rule_name'],
+                                    "id": "SM4",
+                                    "issue": "The string seems to look for a segment in a path but uses the 'fullword' modifier, which can lead to a string that doesn't match.",
+                                    "element": s,
+                                    "level": "warning",
+                                    "type": "logic",
+                                    "recommendation": "Remove the 'fullword' modifier",
+                                 }
+                              )
+
+                        # PDB string starts with \\ 
+                        if re_pdb_folder.search(s['value']):
                            rule_issues.append(
                               {
                                  "rule": rule['rule_name'],
@@ -171,10 +215,8 @@ class YaraQA(object):
                               }
                            )
 
-                  # File path string
-                  if re_filepath_section.search(s['value']):
-                     if 'modifiers' in s:
-                        if 'fullword' in s['modifiers']:
+                        # File path string
+                        if re_filepath_section.search(s['value']):
                            rule_issues.append(
                               {
                                  "rule": rule['rule_name'],

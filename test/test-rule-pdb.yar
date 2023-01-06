@@ -7,7 +7,7 @@ rule Demo_Rule_1_Fullword_PDB : APT {
       reference = "https://github.com/Neo23x0/yaraQA"
       score = 0
    strings:
-      $s1 = "\\i386\\mimidrv.pdb" ascii fullword
+      $s1 = "\\i386\\mimidrv.pdb" ascii wide fullword
    condition:
       all of them
 }
@@ -77,4 +77,18 @@ rule Demo_Rule_6_Condition_Short_Byte_At_Pos : APT {
       $s1 = "dummy,dummy,dummy"
    condition:
       $mz at 0 and 1 of them
+}
+
+
+rule Demo_Rule_6_Condition_Short_Byte_At_Pos : APT {
+   meta:
+      description = "Rule that looks for a short byte string at a particular position"
+      author = "Florian Roth"
+      date = "2023-01-04"
+      reference = "https://github.com/Neo23x0/yaraQA"
+      score = 0
+   strings:
+      $s1 = "\\Section\\in\\Path\\" ascii fullword
+   condition:
+      1 of them
 }
