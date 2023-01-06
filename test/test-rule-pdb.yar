@@ -79,7 +79,6 @@ rule Demo_Rule_6_Condition_Short_Byte_At_Pos : APT {
       $mz at 0 and 1 of them
 }
 
-
 rule Demo_Rule_6_Condition_Short_Byte_At_Pos : APT {
    meta:
       description = "Rule that looks for a short byte string at a particular position"
@@ -89,6 +88,19 @@ rule Demo_Rule_6_Condition_Short_Byte_At_Pos : APT {
       score = 0
    strings:
       $s1 = "\\Section\\in\\Path\\" ascii fullword
+   condition:
+      1 of them
+}
+
+rule Demo_Rule_7_Noob_Rule : APT {
+   meta:
+      description = "Rule that has strings with a bunch of modifiers which indicate that the author had no idea what he was doing and just decided to use them all."
+      author = "Florian Roth"
+      date = "2023-01-04"
+      reference = "https://github.com/Neo23x0/yaraQA"
+      score = 0
+   strings:
+      $s1 = "Usage: %s --killprocess" ascii wide nocase
    condition:
       1 of them
 }
