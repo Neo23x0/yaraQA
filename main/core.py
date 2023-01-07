@@ -60,7 +60,9 @@ class YaraQA(object):
       re_repeating_chars = re.compile(r'^(.)\1{1,}$')
       # Some lists
       fullword_allowed_1st_segments = [r'\\\\.', r'\\\\device', r'\\\\global', r'\\\\dosdevices', 
-         r'\\\\basenamedobjects', r'\\\\?', r'\\\\%', r'.?']  # will be applied lower-cased
+         r'\\\\basenamedobjects', r'\\\\?', r'\\\\*', r'\\\\%', r'.?', r'./', r'\\\\systemroot', '_VBA',
+         r'\\\\registry', r'\\systemroot']  # will be applied lower-cased
+      fullword_allowed_last_segments = [r'*/', r'---']  # will be applied lower-cased
 
       # RULE LOOP ---------------------------------------------------------------
       for rule_set in rule_sets:
@@ -231,7 +233,7 @@ class YaraQA(object):
                               )
 
                         # Characters at the beginning or end that don't work well with 'fullword'
-                        if re_fw_start_chars.search(s['value']) and s['type'] == "text":
+                        if re_fw_start_chars.search(s['value']) and s['type'] == "text" and len(s['value']) > 4:
                            is_allowed = False
                            for allowed_value in fullword_allowed_1st_segments:
                               if string_lower.startswith(allowed_value):
@@ -248,7 +250,12 @@ class YaraQA(object):
                                     "recommendation": "Remove the 'fullword' modifier",
                                  }
                               )
-                        if re_fw_end_chars.search(s['value']) and s['type'] == "text":
+                        if re_fw_end_chars.search(s['value']) and s['type'] == "text" and len(s['value']) > 4:
+                           is_allowed = False
+                           for allowed_value in fullword_allowed_last_segments:
+                              if string_lower.endswith(allowed_value):
+                                 is_allowed = True
+                           if not is_allowed:
                               rule_issues.append(
                                  {
                                     "rule": rule['rule_name'],
@@ -345,8 +352,9 @@ class YaraQA(object):
       # Print it to the cmdline
       for iid, issue in enumerate(filtered_issues):
          # Print the issue
-         self.log.warning("ID: %d TYPE: %s LEVEL: %s RULE: %s ISSUE: %s ELEMENT: %s RECOMMENDATION: %s" % (
+         self.log.warning("ISSUE: %d ID: %s TYPE: %s LEVEL: %s RULE: %s ISSUE: %s ELEMENT: %s RECOMMENDATION: %s" % (
             (iid+1),
+            issue['id'],
             issue['type'],
             issue['level'], 
             issue['rule'],

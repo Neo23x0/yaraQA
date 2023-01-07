@@ -127,6 +127,7 @@ rule Demo_Rule_10_Fullword_Path : APT {
       score = 0
    strings:
       $s1 = "\\User.ini" wide fullword
+      $s2 = "\\\\SystemRoot\\test" wide fullword
    condition:
       1 of them
 }
