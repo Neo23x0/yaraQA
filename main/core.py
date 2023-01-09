@@ -60,10 +60,10 @@ class YaraQA(object):
       re_repeating_chars = re.compile(r'^(.)\1{1,}$')
       # Some lists
       fullword_allowed_1st_segments = [r'\\\\.', r'\\\\device', r'\\\\global', r'\\\\dosdevices', 
-         r'\\\\basenamedobjects', r'\\\\?', r'\\?', r'\\\\*', r'\\\\%', r'.?', r'./', '_VBA',
+         r'\\\\basenamedobjects', r'\\\\?', r'\\?', r'\\\\*', r'\\\\%', r'.?', r'./', '_vba',
          r'\\\\registry', r'\\registry', r'\\systemroot', r'\\\\systemroot', r'.\\',
-         r'. ']  # will be applied lower-cased
-      fullword_allowed_last_segments = [r'*/', r'---', r' //', r';//', r'; //', r'# //']  # will be applied lower-cased
+         r'. ', r'/tmp/', r'/etc/', r'/home/', r'/root/', r'/var/']  # will be applied lower-cased
+      fullword_allowed_last_segments = [r'*/', r'---', r' //', r';//', r'; //', r'# //', r'ipc$', r'c$', r'admin$']  # will be applied lower-cased
 
       # RULE LOOP ---------------------------------------------------------------
       for rule_set in rule_sets:
@@ -228,6 +228,9 @@ class YaraQA(object):
                            is_allowed = False
                            for allowed_value in fullword_allowed_1st_segments:
                               if string_lower.startswith(allowed_value):
+                                 is_allowed = True
+                           for allowed_value in fullword_allowed_last_segments:
+                              if string_lower.endswith(allowed_value):
                                  is_allowed = True
                            if not is_allowed:
                               rule_issues.append(
