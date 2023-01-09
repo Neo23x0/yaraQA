@@ -61,7 +61,8 @@ class YaraQA(object):
       # Some lists
       fullword_allowed_1st_segments = [r'\\\\.', r'\\\\device', r'\\\\global', r'\\\\dosdevices', 
          r'\\\\basenamedobjects', r'\\\\?', r'\\?', r'\\\\*', r'\\\\%', r'.?', r'./', '_VBA',
-         r'\\\\registry', r'\\registry', r'\\systemroot', r'\\\\systemroot', r'.\\']  # will be applied lower-cased
+         r'\\\\registry', r'\\registry', r'\\systemroot', r'\\\\systemroot', r'.\\',
+         r'. ']  # will be applied lower-cased
       fullword_allowed_last_segments = [r'*/', r'---', r' //', r';//', r'; //', r'# //']  # will be applied lower-cased
 
       # RULE LOOP ---------------------------------------------------------------
@@ -242,7 +243,7 @@ class YaraQA(object):
                               )
 
                         # Characters at the beginning or end that don't work well with 'fullword'
-                        if re_fw_start_chars.search(s['value']) and s['type'] == "text" and len(s['value']) > 6:
+                        if re_fw_start_chars.search(s['value']) and s['type'] == "text" and len(s['value']) > 8:
                            is_allowed = False
                            for allowed_value in fullword_allowed_1st_segments:
                               if string_lower.startswith(allowed_value):
