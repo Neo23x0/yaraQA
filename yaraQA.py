@@ -9,7 +9,7 @@
 #            Do not install plyara via pip
 #            Use https://github.com/plyara/plyara
 
-__version__ = "0.6"
+__version__ = "0.6.1"
 
 import os
 import sys
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     parser.add_argument('-d', action='append', nargs='+', help='Path to input directory '
                                                                '(YARA rules folders, separated by space)',
                         metavar='yara files')
-    parser.add_argument('-o', help='Output file that lists the issues', metavar='outfile', default=r'yaraQA-issues.json')
+    parser.add_argument('-o', help="Output file that lists the issues (JSON, default: 'yaraQA-issues.json')", metavar='outfile', default=r'yaraQA-issues.json')
     parser.add_argument('-b', help='Use a issues baseline (issues found and reviewed before) to filter issues', metavar='baseline', default=r'')
     parser.add_argument('-l', help='Minium level to show (1=informational, 2=warning, 3=critical)', metavar='level', default=1)
 
