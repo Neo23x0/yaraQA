@@ -60,6 +60,6 @@ def calculate_rule_hash(rule):
 
     # Generate a hash from the sorted contents
     hash_strings.sort()
-    print(hash_strings)
+    #print(hash_strings)
     m.update("".join(hash_strings).encode("ascii"))
     return m.hexdigest()
