@@ -1,3 +1,4 @@
+import "pe"
 
 rule Demo_Rule_1_Fullword_PDB : APT {
    meta:
@@ -60,7 +61,7 @@ rule Demo_Rule_5_Condition_Short_String_At_Pos : APT {
       score = 0
    strings:
       $mz = "MZ" ascii
-      $s1 = "dummy,dummy,dummy"
+      $s1 = "dummy,dummy,dummy" xor(0x01-0xff)
    condition:
       $mz at 0 and 1 of them
 }
@@ -73,7 +74,7 @@ rule Demo_Rule_6_Condition_Short_Byte_At_Pos : APT {
       reference = "https://github.com/Neo23x0/yaraQA"
       score = 0
    strings:
-      $mz = { 4d 5a }
+      $mz = { 4D 5A }
       $s1 = "dummy,dummy,dummy"
    condition:
       $mz at 0 and 1 of them
@@ -126,10 +127,35 @@ rule Demo_Rule_10_Fullword_Path : APT {
       reference = "https://github.com/Neo23x0/yaraQA"
       score = 0
    strings:
-      $s1 = "\\User.ini" wide fullword
-      $s2 = "\\\\SystemRoot\\test" wide fullword
+      $s1 = "\\user.ini" fullword nocase
+      $s2 = "\\\\SystemRoot\\test" fullword
    condition:
-      1 of them
+      uint16(0) == 0x5a4d and 1 of ($s*)
 }
 
+rule Demo_Rule_11_Fullword_Path_Duplicate : APT {
+   meta:
+      date = "2023-01-09"
+      author = "Florian Roth (@cyb3rops)"
+      score = 0
+      description = "Rule that is logically equal to rule number 11 but has different meta data and string names"
+      reference = "https://github.com/Neo23x0/yaraQA"
+   strings:
+      $s_dup1 = "\\USER.INI" fullword nocase
+      $s_dup2 = "\\\\SystemRoot\\test" ascii fullword
+   condition:
+      1 of ($s_dup*) and uint16(0) == 0x5a4d
+}
 
+rule Demo_Rule_12_Only_PE : APT {
+   meta:
+      description = "Rule that is the only one in the set using the 'pe' module, which slows down the whole scan process"
+      author = "Florian Roth (@cyb3rops)"
+      date = "2023-01-09"
+      reference = "https://github.com/Neo23x0/yaraQA"
+      score = 0
+   strings:
+      $s1 = "\\USER.INI" fullword
+   condition:
+      pe.is_pe() and $s1
+}

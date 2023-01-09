@@ -5,6 +5,8 @@ import traceback
 from pprint import pprint
 import plyara
 
+from main.yaraops import *
+
 class YaraQA(object):
    
    input_files = []
@@ -66,11 +68,63 @@ class YaraQA(object):
       fullword_allowed_last_segments = [r'*/', r'---', r' //', r';//', r'; //', r'# //', r'ipc$', r'c$', r'admin$']  # will be applied lower-cased
 
       # RULE LOOP ---------------------------------------------------------------
+      
+      # Rule set analytics ------------------------------------------------------
+      number_of_rules = 0
+      
+      # Detect duplicate rules
+      # structure:
+      # rule_hashes = {
+      #   "c85ff8f582d8ae533f36cde5f01a6f6b": ['Demo_Rule_1', 'Demo_Rule2'],   <-- duplicate
+      #   "dfbc4a84f58fa29f2ed38d2b77d71824": ['Demo_Rule_3'],
+      # }
+      rule_hash_stats = {}
+
+      # Module usage
+      # rule_modules = {
+      #   "pe": ['Demo_Rule_1', 'Demo_Rule2'], ...   
+      #   "elf": ['Demo_Rule_3'],                  <-- only rule using that module = slowing down scan process
+      # }
+      rule_module_stats = {}
+
+      # Loop over rule sets ------------------------------------------------------
       for rule_set in rule_sets:
+
+         # Increase counter
+         number_of_rules += len(rule_set)
+
+         # Loop over rules
          for rule in rule_set:
+
+            # Calculate the rule hash
+            rule_hash = calculate_rule_hash(rule)
             
+            # Debug output
             if self.debug:
+               # Print the rule as object generated using plyara
                pprint(rule)
+               # Print the generated rule hash
+               self.log.debug("YARA rule hash: %s" % rule_hash)
+
+            # Hash statistics
+            # Add to rule hash structure for later duplicate checking
+            if not rule_hash in rule_hash_stats:
+               rule_hash_stats[rule_hash] = []
+            rule_hash_stats[rule_hash].append(rule['rule_name'])
+
+            # Module statistics
+            if 'imports' in rule: 
+               for module in rule['imports']:
+                  # check if the imported module is actually used in the condition
+                  module_found = False
+                  for element in rule['condition_terms']:
+                     if element.startswith("%s." % module):
+                        module_found = True
+                  # only add it to the stats if the rule uses it
+                  if module_found:
+                     if not module in rule_module_stats:
+                        rule_module_stats[module] = []
+                     rule_module_stats[module].append(rule['rule_name'])
 
             # Some calculations or compositions used in many loops (performance tweak)
             condition_combined = ' '.join(rule['condition_terms'])
@@ -258,7 +312,7 @@ class YaraQA(object):
                                     "id": "SM5",
                                     "issue": "The modifier is 'fullword' but the string seems to start with a character / characters that could be problematic to use with that modifier.",
                                     "element": s,
-                                    "level": 2,
+                                    "level": 1,
                                     "type": "logic",
                                     "recommendation": "Remove the 'fullword' modifier",
                                  }
@@ -309,6 +363,60 @@ class YaraQA(object):
                               }
                            )
 
+      # RULE SET CHECKS -----------------------------------------------------
+
+      # Logical duplicate checks
+      for hash_value, rule_names in rule_hash_stats.items():
+         # Check if single rule hash was calculated for two or more rules
+         if len(rule_names) > 1:
+            for rule in rule_names:
+               rule_issues.append(
+                  {
+                     "rule": rule,
+                     "id": "DU1",
+                     "issue": "This rule looks like a logical duplicate of one or more other rules in this rule set",
+                     "element": {
+                        'duplicate_rules': rule_names,
+                        },
+                     "level": 2,
+                     "type": "logic",
+                     "recommendation": "Remove all duplicate rules",
+                  }
+               )
+
+      # Module usage checks
+      for module_name, rule_names in rule_module_stats.items():
+         # Marker
+         report_module_issue = False
+         num_rules_using_module = len(rule_names)
+         # Only a few rules
+         if num_rules_using_module < 3 and number_of_rules > 30:
+            string_segment = "This rule is the only one using a particular module"
+            if num_rules_using_module > 1:
+               string_segment = "This rule is one of %d using a particular module" % num_rules_using_module
+            report_module_issue = True
+         # Only a low percentage
+         percentage_using_module = 100 * float(num_rules_using_module) / float(number_of_rules)
+         if percentage_using_module < 1:
+            string_segment = "This rule is one of only %.2f%% of rules using that module" % percentage_using_module
+            report_module_issue = True
+         # Report it
+         if report_module_issue:
+            for rule in rule_names:
+               rule_issues.append(
+                  {
+                     "rule": rule,
+                     "id": "MO1",
+                     "issue": "%s, which slows down the whole scanning process." % string_segment,
+                     "element": {
+                        'module': module_name,
+                        },
+                     "level": 3,
+                     "type": "performance",
+                     "recommendation": "Try to refactor the rules so that they don't require the module.",
+                  }
+               )
+
       return rule_issues
 
    def printIssues(self, rule_issues, outfile, min_level, baseline, ignore_performance):
@@ -326,7 +434,7 @@ class YaraQA(object):
          with open(baseline) as json_file:
             baselined_issues = json.load(json_file)
          if self.debug:
-            self.log.info("Read %d issues from the baseline file %s" % (len(baselined_issues), baseline))
+            self.log.debug("Read %d issues from the baseline file %s" % (len(baselined_issues), baseline))
       # Now filter the issues
       for issue in rule_issues:
          # Ignore all rules with level lower than minium level
