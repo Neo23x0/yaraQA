@@ -60,12 +60,19 @@ class YaraQA(object):
       re_fw_start_chars = re.compile(r'^[\.\)_]')
       re_fw_end_chars = re.compile(r'[\(\/\\_-]$')
       re_repeating_chars = re.compile(r'^(.)\1{1,}$')
+      re_condition_fails = re.compile(r'\([\s]?0,[\s]?filesize[\s]?\)')
       # Some lists
       fullword_allowed_1st_segments = [r'\\\\.', r'\\\\device', r'\\\\global', r'\\\\dosdevices', 
          r'\\\\basenamedobjects', r'\\\\?', r'\\?', r'\\\\*', r'\\\\%', r'.?', r'./', '_vba',
          r'\\\\registry', r'\\registry', r'\\systemroot', r'\\\\systemroot', r'.\\',
          r'. ', r'/tmp/', r'/etc/', r'/home/', r'/root/', r'/var/']  # will be applied lower-cased
-      fullword_allowed_last_segments = [r'*/', r'---', r' //', r';//', r'; //', r'# //', r'ipc$', r'c$', r'admin$']  # will be applied lower-cased
+      fullword_allowed_last_segments = [r'*/', r'---', r' //', r';//', r'; //', r'# //', r'ipc$', r'c$', r'admin$']  # will # applied lower-cased
+      less_avoidable_short_atoms = ['<?', '<%', '<% ', '<?=', 'GET', '%>']
+      # Regex Lists
+      re_fw_allowed_strings = [r'\\\\[a-zA-Z]+']
+      re_fw_allowed_res = []
+      for re_value in re_fw_allowed_strings:
+         re_fw_allowed_res.append(re.compile(re_value))
 
       # RULE LOOP ---------------------------------------------------------------
       
@@ -131,6 +138,21 @@ class YaraQA(object):
 
             # CONDITION TESTS ###################################################
 
+            # Condition segments that cause performance issues / are very inefficient
+            result_re_fail = re_condition_fails.search(rule['raw_condition'])
+            if result_re_fail:
+               rule_issues.append(
+                  {
+                     "rule": rule['rule_name'],
+                     "id": "CF1",
+                     "issue": "The rule uses a condition that includes a calculation over the full file content (hash, mathematical calculation)",
+                     "element": {'condition_segment': result_re_fail.group(0)},
+                     "level": 3,
+                     "type": "performance",
+                     "recommendation": "Don't do this, because it slows down the scan process a lot.",
+                  }
+               )
+
             # Problem : '2 of them' in condition but rule contains only 1 string
             # Reason  : rule will never match
             if 'strings' in rule:
@@ -159,11 +181,15 @@ class YaraQA(object):
                   result_at_pos = re_at_pos.search(condition_combined)
                   if result_at_pos:
                      at_pos_string = result_at_pos.group(1)
+                     at_pos_pos = result_at_pos.group(2)
                      at_pos_expression = result_at_pos.group(0)
                      for s in rule['strings']:
                         if at_pos_string == s['name']:
                            if ( s['type'] == "text" and len(s['value']) < 3 ) or \
                            ( s['type'] == "byte" and len(s['value'].replace(' ', '')) < 7 ):
+                              # Calculate a fitting replacement
+                              replacement_string = calculate_uint_replacement(s['value'], s['type'], at_pos_pos)
+                              # Add the issue
                               rule_issues.append(
                                  {
                                     "rule": rule['rule_name'],
@@ -176,7 +202,7 @@ class YaraQA(object):
                                        },
                                     "level": 2,
                                     "type": "performance",
-                                    "recommendation": "",
+                                    "recommendation": "Rewrite as %s" % replacement_string,
                                  }
                               )
 
@@ -227,13 +253,17 @@ class YaraQA(object):
                   # Reason  : short atoms can cause longer scan times and blow up memory usage
                   if ( s['type'] == "text" and len(s['value']) < 4 ) or \
                      ( s['type'] == "byte" and len(s['value'].replace(' ', '')) < 9 ):
+                           set_level = 2
+                           for v in less_avoidable_short_atoms:
+                              if v == s['value']:
+                                 set_level = 1
                            rule_issues.append(
                               {
                                  "rule": rule['rule_name'],
                                  "id": "PA2",
                                  "issue": "The rule contains a string that turns out to be a very short atom, which could cause a reduced performance of the complete rule set or increased memory usage.",
                                  "element": s,
-                                 "level": 2,
+                                 "level": set_level,
                                  "type": "performance",
                                  "recommendation": "Try to avoid using such short atoms, by e.g. adding a few more bytes to the beginning or the end (e.g. add a binary 0 in front or a space after the string). Every additional byte helps.",
                               }
@@ -285,6 +315,9 @@ class YaraQA(object):
                                  is_allowed = True
                            for allowed_value in fullword_allowed_last_segments:
                               if string_lower.endswith(allowed_value):
+                                 is_allowed = True
+                           for allowed_re in re_fw_allowed_res:
+                              if allowed_re.search(string_lower):
                                  is_allowed = True
                            if not is_allowed:
                               rule_issues.append(

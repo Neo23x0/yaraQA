@@ -1,4 +1,5 @@
 import "pe"
+import "hash"
 
 rule Demo_Rule_1_Fullword_PDB : APT {
    meta:
@@ -158,4 +159,28 @@ rule Demo_Rule_12_Only_PE : APT {
       $s1 = "\\USER.INI" fullword
    condition:
       pe.is_pe() and $s1
+}
+
+rule Demo_Rule_13_MZ_At_Pos : APT {
+   meta:
+      description = "Rule that looks for a short byte string at a particular position"
+      author = "Florian Roth"
+      date = "2023-01-04"
+      reference = "https://github.com/Neo23x0/yaraQA"
+      score = 0
+   strings:
+      $mz = "MZ"
+   condition:
+      $mz at 0
+}
+
+rule Demo_Rule_14_Hash_Calc_Fail : APT {
+   meta:
+      description = "Rule that calculates a hash over the whole file and compares it with a value (slows down the scan; YARA is not made for this)"
+      author = "Florian Roth"
+      date = "2023-01-10"
+      reference = "https://github.com/Neo23x0/yaraQA"
+      score = 0
+   condition:
+      hash.sha256(0, filesize) == "1a4a5123d7b2c534cb3e3168f7032cf9ebf38b9a2a97226d0fdb7933cf6030ff"
 }
