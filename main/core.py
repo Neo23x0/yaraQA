@@ -60,7 +60,7 @@ class YaraQA(object):
       re_fw_start_chars = re.compile(r'^[\.\)_]')
       re_fw_end_chars = re.compile(r'[\(\/\\_-]$')
       re_repeating_chars = re.compile(r'^(.)\1{1,}$')
-      re_condition_fails = re.compile(r'\([\s]?0,[\s]?filesize[\s]?\)')
+      re_condition_fails = re.compile(r'\([\s]?[0-9]{1,3},[\s]?filesize[\s]?[\-]?[0-9]{0,3}[\s]?\)')
       # Some lists
       fullword_allowed_1st_segments = [r'\\\\.', r'\\\\device', r'\\\\global', r'\\\\dosdevices', 
          r'\\\\basenamedobjects', r'\\\\?', r'\\?', r'\\\\*', r'\\\\%', r'.?', r'./', '_vba',
@@ -145,7 +145,7 @@ class YaraQA(object):
                   {
                      "rule": rule['rule_name'],
                      "id": "CF1",
-                     "issue": "The rule uses a condition that includes a calculation over the full file content (hash, mathematical calculation)",
+                     "issue": "The rule uses a condition that includes a calculation over the full file content (hash, mathematical calculation) or almost the full size of the file",
                      "element": {'condition_segment': result_re_fail.group(0)},
                      "level": 3,
                      "type": "performance",
