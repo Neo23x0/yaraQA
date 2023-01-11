@@ -187,7 +187,7 @@ rule Demo_Rule_14_Hash_Calc_Fail : APT {
 
 rule Demo_Rule_15_Entropy_Calc_Fail : APT {
    meta:
-      description = "Rule that calculates the entropy over almost the whole file (slows down the scan)"
+      description = "Rule that calculates the entropy over almost the whole file before the strings get checked (slows down the scan) - the order in the condition is important"
       author = "Florian Roth"
       date = "2023-01-10"
       reference = "https://github.com/Neo23x0/yaraQA"
@@ -195,5 +195,5 @@ rule Demo_Rule_15_Entropy_Calc_Fail : APT {
    strings: 
       $ = "bypass"
    condition:
-      all of them and math.entropy(500, filesize-500) >= 5.7
+      math.entropy(500, filesize-500) >= 5.7 and all of them
 }

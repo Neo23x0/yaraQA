@@ -147,9 +147,9 @@ class YaraQA(object):
                      "id": "CF1",
                      "issue": "The rule uses a condition that includes a calculation over the full file content (hash, mathematical calculation) or almost the full size of the file",
                      "element": {'condition_segment': result_re_fail.group(0)},
-                     "level": 3,
+                     "level": 2,
                      "type": "performance",
-                     "recommendation": "Don't do this, because it slows down the scan process a lot.",
+                     "recommendation": "Make sure that the calculation appears last in the condition to make use of the short circuit evaluation. (DON'T: 'math.entropy(500, filesize-500) >= 5.7 and all of them' DO: 'all of them and math.entropy(500, filesize-500) >= 5.7'",
                   }
                )
 
