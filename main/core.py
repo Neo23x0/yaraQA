@@ -61,6 +61,7 @@ class YaraQA(object):
       re_fw_end_chars = re.compile(r'[\(\/\\_-]$')
       re_repeating_chars = re.compile(r'^(.)\1{1,}$')
       re_condition_fails = re.compile(r'\([\s]?[0-9]{1,3},[\s]?filesize[\s]?[\-]?[0-9]{0,3}[\s]?\)')
+      re_nocase_save = re.compile(r'[^a-zA-Z]')
       # Some lists
       fullword_allowed_1st_segments = [r'\\\\.', r'\\\\device', r'\\\\global', r'\\\\dosdevices', 
          r'\\\\basenamedobjects', r'\\\\?', r'\\?', r'\\\\*', r'\\\\%', r'.?', r'./', '_vba',
@@ -73,6 +74,8 @@ class YaraQA(object):
       re_fw_allowed_res = []
       for re_value in re_fw_allowed_strings:
          re_fw_allowed_res.append(re.compile(re_value))
+      # Save modules
+      save_modules = ['math', 'hash']
 
       # RULE LOOP ---------------------------------------------------------------
       
@@ -238,7 +241,7 @@ class YaraQA(object):
                            {
                               "rule": rule['rule_name'],
                               "id": "NO1",
-                              "issue": "The string uses 'ascii', 'wide' and 'nocase' modifier. Are you sure you know what you're doing. Please don't drink and write YARA rules.",
+                              "issue": "The string uses 'ascii', 'wide' and 'nocase' modifier. Are you sure you know what you're doing.",
                               "element": s,
                               "level": 1,
                               "type": "performance",
@@ -294,6 +297,25 @@ class YaraQA(object):
                                  "level": 3,
                                  "type": "logic",
                                  "recommendation": "Replace the 'wide' modifier with 'ascii'",
+                              }
+                           )
+
+
+                  # NOCASE MODIFIER ISSUES --------------------------------------------------------
+
+                  # Nocase use
+                  if 'modifiers' in s:
+                     if 'nocase' in s['modifiers']:
+                        if len(s['value']) > 3 and not re_nocase_save.search(s['value']):
+                           rule_issues.append(
+                              {
+                                 "rule": rule['rule_name'],
+                                 "id": "NC1",
+                                 "issue": "The string uses the 'nocase' modifier and does not contain any special characters or digits.",
+                                 "element": s,
+                                 "level": 1,
+                                 "type": "performance",
+                                 "recommendation": "By adding a single character that is not a letter (e.g. space, digit) you can improve the performance of the string significantly.",
                               }
                            )
 
@@ -434,21 +456,22 @@ class YaraQA(object):
             string_segment = "This rule is one of only %.2f%% of rules using that module" % percentage_using_module
             report_module_issue = True
          # Report it
-         if report_module_issue:
-            for rule in rule_names:
-               rule_issues.append(
-                  {
-                     "rule": rule,
-                     "id": "MO1",
-                     "issue": "%s, which slows down the whole scanning process." % string_segment,
-                     "element": {
-                        'module': module_name,
-                        },
-                     "level": 3,
-                     "type": "performance",
-                     "recommendation": "Try to refactor the rules so that they don't require the module.",
-                  }
-               )
+         if module_name not in save_modules:
+            if report_module_issue:
+               for rule in rule_names:
+                  rule_issues.append(
+                     {
+                        "rule": rule,
+                        "id": "MO1",
+                        "issue": "%s, which slows down the whole scanning process." % string_segment,
+                        "element": {
+                           'module': module_name,
+                           },
+                        "level": 1,
+                        "type": "performance",
+                        "recommendation": "Try to refactor the rules so that they don't require the module.",
+                     }
+                  )
 
       return rule_issues
 

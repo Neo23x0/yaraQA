@@ -197,3 +197,16 @@ rule Demo_Rule_15_Entropy_Calc_Fail : APT {
    condition:
       math.entropy(500, filesize-500) >= 5.7 and all of them
 }
+
+rule Demo_Rule_16_Nocase_OnlyLetters : APT {
+   meta:
+      description = "Rule that uses nocase for a string that contains only letters"
+      author = "Florian Roth"
+      date = "2023-01-10"
+      reference = "https://github.com/Neo23x0/YARA-Performance-Guidelines#string-advices"
+      score = 0
+   strings: 
+      $ = "bypass" nocase
+   condition:
+      all of them
+}
