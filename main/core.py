@@ -19,33 +19,6 @@ class YaraQA(object):
       self.debug = debug
       self.log = log
 
-   def readFiles(self, input_files):
-      """
-      Reads the YARA input files
-      :return:
-      """
-      rule_sets = []
-      # Loop over input files
-      for f in input_files:
-         try:
-            self.log.info("Processing %s ..." % f)
-            p = plyara.Plyara()
-            file_data = ""
-            # Read file
-            with open(f, 'r') as fh:
-               file_data = fh.read()
-            # Skip files without rule
-            if 'rule' not in file_data:
-               continue
-            rule_set = p.parse_string(file_data)
-            rule_sets.append(rule_set)
-         except Exception as e:
-               self.log.error("Error parsing YARA rule file '%s'" % f)
-               traceback.print_exc()
-               sys.exit(1)
-      # Return the parsed rules
-      return rule_sets
-
    def analyzeRules(self, rule_sets):
 
       # Rule issues
@@ -250,6 +223,9 @@ class YaraQA(object):
                         )
 
                   # STRING ONLY TESTS ------------------------------------------
+
+                  # Duplicate string tests
+                  # TODO
 
                   # Short atom test
                   # Problem : $ = "ab" ascii fullword

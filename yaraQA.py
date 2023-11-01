@@ -9,7 +9,7 @@
 #            Do not install plyara via pip
 #            Use https://github.com/plyara/plyara
 
-__version__ = "0.8.0"
+__version__ = "0.8.1"
 
 import os
 import sys
@@ -19,6 +19,7 @@ import pprint
 import platform
 
 from main.core import YaraQA
+from main.fileops import readFiles
 
 sys.path.insert(0, os.getcwd())
 
@@ -80,7 +81,7 @@ if __name__ == '__main__':
                         if ".yar" in f:
                             input_files.append(os.path.join(dirpath, f))
     else:
-        parser.print_help()
+            
         Log.error("[E] No input files selected")
 
     # Show selected input files
@@ -94,7 +95,7 @@ if __name__ == '__main__':
 
     # Read files
     Log.info("Reading input files ...")
-    rule_sets = m.readFiles(input_files=input_files)
+    rule_sets = readFiles(input_files=input_files)
     Log.info("%d rule sets have been found and parsed" % len(rule_sets))
 
     # Analyze rules
