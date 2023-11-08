@@ -9,7 +9,7 @@
 #            Do not install plyara via pip
 #            Use https://github.com/plyara/plyara
 
-__version__ = "0.8.1"
+__version__ = "0.9.0"
 
 import os
 import sys
@@ -18,8 +18,7 @@ import logging
 import pprint
 import platform
 
-from main.core import YaraQA
-from main.fileops import readFiles
+from main.core import YaraQA, read_files
 
 sys.path.insert(0, os.getcwd())
 
@@ -49,7 +48,7 @@ if __name__ == '__main__':
     print("   \\__, /\\__,_/_/   \\__,_/\\___\\_\\/_/  |_| ")
     print("  /____/                                  ")
     print(" ")
-    print("   Florian Roth, January 2023, %s" % __version__)
+    print("   Florian Roth, November 2023, %s" % __version__)
     print(" ")
     # Logging
     logFormatter = logging.Formatter("[%(levelname)-5.5s] %(message)s")
@@ -95,12 +94,12 @@ if __name__ == '__main__':
 
     # Read files
     Log.info("Reading input files ...")
-    rule_sets = readFiles(input_files=input_files)
+    rule_sets = read_files(input_files=input_files)
     Log.info("%d rule sets have been found and parsed" % len(rule_sets))
 
     # Analyze rules
     Log.info("Analyzing rules for issues ...")
-    rule_issues = m.analyzeRules(rule_sets)
+    rule_issues = m.analyze_rules(rule_sets)
     Log.info("%d rule issues have been found (all types)" % len(rule_issues))
 
     # Print rule issues
@@ -108,7 +107,7 @@ if __name__ == '__main__':
         # Output file preparation
         outfile = args.o
         # Now show the issues
-        num_printed_issues = m.printIssues(rule_issues, outfile, int(args.l), args.b, args.ignore_performance)
+        num_printed_issues = m.print_issues(rule_issues, outfile, int(args.l), args.b, args.ignore_performance)
 
         if num_printed_issues > 0:
             sys.exit(1)

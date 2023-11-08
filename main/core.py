@@ -467,7 +467,7 @@ class YaraQA(object):
       return rule_issues
 
 
-   def printIssues(self, rule_issues, outfile, min_level, baseline, ignore_performance):
+   def print_issues(self, rule_issues, outfile, min_level, baseline, ignore_performance):
 
       # Apply some filters
       filtered_issues = []
@@ -538,7 +538,7 @@ class YaraQA(object):
       return len(filtered_issues)
 
 
-def readFiles(input_files):
+def read_files(input_files):
    """
    Reads the YARA input files
    :return:
