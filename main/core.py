@@ -85,7 +85,7 @@ class YaraQA(object):
             rule_hash = calculate_rule_hash(rule)
             
             # Print the generated rule hash
-            log.debug("YARA rule hash: %s" % rule_hash)
+            logging.debug("YARA rule hash: %s" % rule_hash) 
 
             # Hash statistics
             # Add to rule hash structure for later duplicate checking

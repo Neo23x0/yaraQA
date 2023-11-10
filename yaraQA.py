@@ -9,7 +9,7 @@
 #            Do not install plyara via pip
 #            Use https://github.com/plyara/plyara
 
-__version__ = "0.9.0"
+__version__ = "0.9.1"
 
 import os
 import sys
@@ -66,14 +66,14 @@ if __name__ == '__main__':
     if args.f:
         for f in args.f[0]:
             if not os.path.exists(f):
-                Log.error("[E] Error: input file '%s' doesn't exist" % f)
+                logging.error("[E] Error: input file '%s' doesn't exist" % f)
             else:
                 input_files.append(f)
     # Directory list
     elif args.d:
         for d in args.d[0]:
             if not os.path.exists(d):
-                Log.error("[E] Error: input directory '%s' doesn't exist" % d)
+                logging.error("[E] Error: input directory '%s' doesn't exist" % d)
             else:
                 for dirpath, dirnames, files in os.walk(d):
                     for f in files:
@@ -81,26 +81,26 @@ if __name__ == '__main__':
                             input_files.append(os.path.join(dirpath, f))
     else:
             
-        Log.error("[E] No input files selected")
+        logging.error("[E] No input files selected")
 
     # Show selected input files
     if args.debug:
-        Log.setLevel(level=logging.DEBUG)
+        logging.setLevel(level=logging.DEBUG)
 
-    Log.debug("NUMBER OF INPUT FILES: %s" % len(input_files))
+    logging.debug("NUMBER OF INPUT FILES: %s" % len(input_files))
 
     # Create yaraQA object
     m = YaraQA()
 
     # Read files
-    Log.info("Reading input files ...")
+    logging.info("Reading input files ...")
     rule_sets = read_files(input_files=input_files)
-    Log.info("%d rule sets have been found and parsed" % len(rule_sets))
+    logging.info("%d rule sets have been found and parsed" % len(rule_sets))
 
     # Analyze rules
-    Log.info("Analyzing rules for issues ...")
+    logging.info("Analyzing rules for issues ...")
     rule_issues = m.analyze_rules(rule_sets)
-    Log.info("%d rule issues have been found (all types)" % len(rule_issues))
+    logging.info("%d rule issues have been found (all types)" % len(rule_issues))
 
     # Print rule issues
     if len(rule_issues) > 0:
