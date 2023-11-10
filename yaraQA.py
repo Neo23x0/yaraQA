@@ -91,7 +91,7 @@ if __name__ == '__main__':
     Log.debug("NUMBER OF INPUT FILES: %s" % len(input_files))
 
     # Create yaraQA object
-    m = YaraQA(log=Log, debug=args.debug)
+    m = YaraQA()
 
     # Read files
     Log.info("Reading input files ...")

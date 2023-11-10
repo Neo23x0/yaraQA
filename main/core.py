@@ -5,20 +5,18 @@ import plyara
 import hashlib
 import binascii
 import traceback
+import logging
 from pprint import pprint
 
 class YaraQA(object):
    
    input_files = []
 
-   def __init__(self, log, debug=False):
+   def __init__(self):
       """
       Initialize the object with the files to process
       :param input_files:
       """
-      self.debug = debug
-      self.log = log
-      # 
       self.initialize_regular_expressions()
 
    def initialize_regular_expressions(self):
@@ -86,12 +84,8 @@ class YaraQA(object):
             # Calculate the rule hash
             rule_hash = calculate_rule_hash(rule)
             
-            # Debug output
-            if self.debug:
-               # Print the rule as object generated using plyara
-               pprint(rule)
-               # Print the generated rule hash
-               self.log.debug("YARA rule hash: %s" % rule_hash)
+            # Print the generated rule hash
+            log.debug("YARA rule hash: %s" % rule_hash)
 
             # Hash statistics
             # Add to rule hash structure for later duplicate checking
@@ -481,8 +475,7 @@ class YaraQA(object):
       if baseline:
          with open(baseline) as json_file:
             baselined_issues = json.load(json_file)
-         if self.debug:
-            self.log.debug("Read %d issues from the baseline file %s" % (len(baselined_issues), baseline))
+         logging.debug("Read %d issues from the baseline file %s" % (len(baselined_issues), baseline))
       # Now filter the issues
       for issue in rule_issues:
          # Ignore all rules with level lower than minium level
@@ -506,22 +499,22 @@ class YaraQA(object):
 
       # Show excluded counts
       total_excluded_count = excluded_count_level + excluded_count_baselined + excluded_count_performance
-      self.log.info("%d rules have been excluded from the output (lower level: %d performance issues: %d, baselined issues: %d)" % 
+      logging.info("%d rules have been excluded from the output (lower level: %d performance issues: %d, baselined issues: %d)" % 
                      (total_excluded_count, excluded_count_level, excluded_count_performance, excluded_count_baselined))
 
       # Print info if issues have been found
       if len(filtered_issues) > 0:
-         self.log.info("The following issues have been found")
+         logging.info("The following issues have been found")
       else:
          if baseline:
-            self.log.info("No new issues have been found")
+            logging.info("No new issues have been found")
          else:
-            self.log.info("No issues have been found")
+            logging.info("No issues have been found")
 
       # Print it to the cmdline
       for iid, issue in enumerate(filtered_issues):
          # Print the issue
-         self.log.warning("ISSUE: %d ID: %s TYPE: %s LEVEL: %s RULE: %s ISSUE: %s ELEMENT: %s RECOMMENDATION: %s" % (
+         logging.warning("ISSUE: %d ID: %s TYPE: %s LEVEL: %s RULE: %s ISSUE: %s ELEMENT: %s RECOMMENDATION: %s" % (
             (iid+1),
             issue['id'],
             issue['type'],
