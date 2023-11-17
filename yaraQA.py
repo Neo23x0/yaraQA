@@ -9,7 +9,7 @@
 #            Do not install plyara via pip
 #            Use https://github.com/plyara/plyara
 
-__version__ = "0.9.1"
+__version__ = "0.10.0"
 
 import os
 import sys
