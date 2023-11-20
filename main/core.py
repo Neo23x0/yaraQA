@@ -41,7 +41,7 @@ class YaraQA(object):
 		self.fullword_allowed_1st_segments = [r'\\\\.', r'\\\\device', r'\\\\global', r'\\\\dosdevices', 
 			r'\\\\basenamedobjects', r'\\\\?', r'\\?', r'\\\\*', r'\\\\%', r'.?', r'./', '_vba',
 			r'\\\\registry', r'\\registry', r'\\systemroot', r'\\\\systemroot', r'.\\',
-			r'. ', r'/tmp/', r'/etc/', r'/home/', r'/root/', r'/var/', r'\t']  # will be applied lower-cased
+			r'. ', r'/tmp/', r'/etc/', r'/home/', r'/root/', r'/var/', '\t']  # will be applied lower-cased
 		self.fullword_allowed_last_segments = [r'*/', r'---', r' //', r';//', r'; //', r'# //', r'ipc$', r'c$', r'admin$']  # will # applied lower-cased
 		self.less_avoidable_short_atoms = ['<?', '<%', '<% ', '<?=', 'GET', '%>']
 		# Regex Lists

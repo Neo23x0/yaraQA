@@ -44,7 +44,7 @@ def substring_test(self, rule):
 		# Check if the current string is a substring of one of the other strings
 		# Problem : $a = "abc" $b = "bc" condition: $a or $b 
 		for s2 in string_list:
-			if s['value'] in s2['value'] and s['name'] != s2['name']:
+			if s['value'] in s2['value'] and s['name'] != s2['name'] and s['value'] != s2['value']:
 				test_issues.append(
 					{
 						"rule": rule['rule_name'],

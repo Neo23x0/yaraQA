@@ -279,3 +279,51 @@ rule Demo_Rule_20_String_in_String_No_Issue_1 {
       uint16(0) == 0x457f and $s1
       or $s2
 }
+
+rule Demo_Rule_20_String_in_String_No_Issue_1 {
+   meta:
+      description = "Rule that has strings that are contained in other strings but it's okay, because the condition handles it"
+      author = "Florian Roth"
+      date = "2023-11-20"
+      reference = "https://github.com/Neo23x0/yaraQA"
+      score = 0
+   strings:
+      $s1 = "\\mimidrv.pdb" ascii
+      $s2 = "\\more\\specific\\i386\\mimidrv.pdb" ascii
+   condition:
+      uint16(0) == 0x457f and $s1
+      or $s2
+}
+
+rule ELASTIC_Windows_Trojan_P8Loader_E478A831
+{
+	meta:
+		id = "e478a831-b2a1-4436-8b17-ca92b9581c39"
+		fingerprint = "267743fc82c701d3029cde789eb471b49839001b21b90eeb20783382a56fb2c3"
+		severity = 100
+		arch_context = "x86"
+		scan_context = "file, memory"
+		license = "Elastic License v2"
+		os = "windows"
+		quality = 40
+		reference = "https://github.com/elastic/protections-artifacts/"
+		date = "2023-04-13"
+		modified = "2023-05-26"
+		description = "Detects Windows Trojan P8Loader (Windows.Trojan.P8Loader)"
+		author = "Elastic Security"
+		score = 75
+		source_url = "https://github.com/elastic/protections-artifacts//blob/f9196cbcd7bbc65f66a02d8318209987720372b0/yara/rules/Windows_Trojan_P8Loader.yar#L1-L25"
+
+	strings:
+		$a1 = "\t[+] Create pipe direct std success\n" fullword
+		$a2 = "\tPEAddress: %p\n" fullword
+		$a3 = "\tPESize: %ld\n" fullword
+		$a4 = "DynamicLoad(%s, %s) %d\n" fullword
+		$a5 = "LoadLibraryA(%s) FAILED in %s function, line %d" fullword
+		$a6 = "\t[+] No PE loaded on memory\n" wide fullword
+		$a7 = "\t[+] PE argument: %ws\n" wide fullword
+		$a8 = "LoadLibraryA(%s) FAILED in %s function, line %d" fullword
+
+	condition:
+		5 of them
+}
