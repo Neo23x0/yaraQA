@@ -235,3 +235,47 @@ rule Duplicate_String_Rule {
     condition:
         all of them
 }
+
+rule Demo_Test_Regex_GodLua_Linux: linuxmalware
+{
+   meta:
+      Author = "Adam M. Swanda (modified)"
+      Website = "https://www.deadbits.org"
+      Repo = "https://github.com/deadbits/yara-rules"
+      Date = "2019-07-18"
+
+   strings:
+      $identifier1 = /fbi\/d\.\/d.\/d/ ascii
+   condition:
+      uint16(0) == 0x457f
+      and $identifier1
+}
+
+rule Demo_Rule_20_String_in_String_1 {
+   meta:
+      description = "Rule that has strings that are contained in other strings"
+      author = "Florian Roth"
+      date = "2023-11-20"
+      reference = "https://github.com/Neo23x0/yaraQA"
+      score = 0
+   strings:
+      $s1 = "\\mimidrv.pdb" ascii
+      $s2 = "\\i386\\mimidrv.pdb" ascii
+   condition:
+      all of them
+}
+
+rule Demo_Rule_20_String_in_String_No_Issue_1 {
+   meta:
+      description = "Rule that has strings that are contained in other strings but it's okay, because the condition handles it"
+      author = "Florian Roth"
+      date = "2023-11-20"
+      reference = "https://github.com/Neo23x0/yaraQA"
+      score = 0
+   strings:
+      $s1 = "\\mimidrv.pdb" ascii
+      $s2 = "\\more\\specific\\i386\\mimidrv.pdb" ascii
+   condition:
+      uint16(0) == 0x457f and $s1
+      or $s2
+}

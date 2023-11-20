@@ -1,7 +1,13 @@
+"""
+Condition Checks
+"""
 
 from .utils import calculate_uint_replacement
 
 def analyze_condition(yaraQA, rule):
+	"""
+	Analyze the condition of a rule for issues
+	"""
 	
 	# Condition issues
 	condition_issues = []

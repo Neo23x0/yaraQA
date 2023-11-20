@@ -1,8 +1,10 @@
-
+"""
+String checks
+"""
 
 def analyze_strings(self, rule):
    """
-   String checks
+   Analyze the strings of the rules
    """
    string_issues = []
 
@@ -69,6 +71,21 @@ def analyze_strings(self, rule):
                         "recommendation": "Try to avoid using such short atoms, by e.g. adding a few more bytes to the beginning or the end (e.g. add a binary 0 in front or a space after the string). Every additional byte helps.",
                      }
                   )
+
+         # Short Regex Anchors
+         if s['type'] == "regex":
+            if not self.re_short_regex_anchor.search(s['value']):
+               string_issues.append(
+                  {
+                     "rule": rule['rule_name'],
+                     "id": "RE1",
+                     "issue": "The rule contains a regular expression that doesn't use anchors with at least 4 bytes, which could lead to a reduced performance of the complete rule set or increased memory usage.",
+                     "element": s['value'],
+                     "level": 2,
+                     "type": "performance",
+                     "recommendation": "Add longer anchors or try to write it as a string with at least 4 bytes. (add a line break, binary zero or space at the beginning, if possible)",
+                  }
+               )
 
          # PDB string wide modifier
          if self.re_pdb.search(s['value']):

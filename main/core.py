@@ -9,6 +9,7 @@ from pprint import pprint
 
 from .condition_checks import analyze_condition
 from .string_checks import analyze_strings
+from .combination_checks import analyze_combinations
 
 class YaraQA(object):
 	
@@ -33,6 +34,9 @@ class YaraQA(object):
 		self.re_repeating_chars = re.compile(r'^(.)\1{1,}$')
 		self.re_condition_fails = re.compile(r'\([\s]?[0-9]{1,3},[\s]?filesize[\s]?[\-]?[0-9]{0,3}[\s]?\)')
 		self.re_nocase_save = re.compile(r'[^a-zA-Z]')
+		self.re_short_regex_anchor = re.compile(r'[a-zA-Z0-9_]{4,}') # it's not correct but good enough for now
+		self.re_x_of_them_condition_1 = re.compile(r'(^|or )([0-9]{1,3}|any|all) of them$')
+		self.re_x_of_them_condition_2 = re.compile(r'^([0-9]{1,3}|any|all) of them($| or)')
 		# Some lists
 		self.fullword_allowed_1st_segments = [r'\\\\.', r'\\\\device', r'\\\\global', r'\\\\dosdevices', 
 			r'\\\\basenamedobjects', r'\\\\?', r'\\?', r'\\\\*', r'\\\\%', r'.?', r'./', '_vba',
@@ -184,6 +188,11 @@ class YaraQA(object):
 
 		string_issues = analyze_strings(self, rule)
 		rule_issues.extend(string_issues)
+
+		# COMBINATION TESTS ###############################################
+
+		combination_issues = analyze_combinations(self, rule)
+		rule_issues.extend(combination_issues)
 
 		return rule_issues
 
