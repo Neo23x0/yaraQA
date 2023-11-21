@@ -27,8 +27,13 @@ def check_duplicate_strings(self, rule):
 		for s2 in string_list:
 			if s['value'] == s2['value'] and s['name'] != s2['name']:
 				# Check if the combination has already been reported
-				if not s['value'] in strings_reported:
-					strings_reported.append(s['value'])
+				# Modifier string
+				modifier_string = ""
+				if 'modifiers' in s:
+					modifier_string = ":".join(sorted(s['modifiers']))
+				string_with_modifiers = f""
+				if string_with_modifiers in strings_reported:
+					strings_reported.append(string_with_modifiers)
 					test_issues.append(
 						{
 							"rule": rule['rule_name'],
