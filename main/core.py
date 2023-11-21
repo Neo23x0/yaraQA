@@ -34,7 +34,7 @@ class YaraQA(object):
 		self.re_repeating_chars = re.compile(r'^(.)\1{1,}$')
 		self.re_condition_fails = re.compile(r'\([\s]?[0-9]{1,3},[\s]?filesize[\s]?[\-]?[0-9]{0,3}[\s]?\)')
 		self.re_nocase_save = re.compile(r'[^a-zA-Z]')
-		self.re_short_regex_anchor = re.compile(r'[a-zA-Z0-9_]{4,}') # it's not correct but good enough for now
+		self.re_short_regex_anchor = re.compile(r'[a-zA-Z0-9_\s\.=\"\']{4,}') # it's not correct but good enough for now
 		self.re_x_of_them_condition_1 = re.compile(r'(^|or )([0-9]{1,3}|any|all) of them$')
 		self.re_x_of_them_condition_2 = re.compile(r'^([0-9]{1,3}|any|all) of them($| or)')
 		# Some lists
