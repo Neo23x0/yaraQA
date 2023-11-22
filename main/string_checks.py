@@ -2,6 +2,7 @@
 String checks
 """
 
+import string
 import binascii
 
 def check_duplicate_strings(self, rule):
@@ -84,15 +85,17 @@ def analyze_strings(self, rule):
 
 			# String that is encoded as hex but can be written as text
 			if s['type'] == "byte":
+				# Define a set of acceptable characters
+				acceptable_chars = set(string.ascii_letters + string.digits + string.punctuation + ' ')
 				# Remove spaces and braces
 				hex_string = s['value'].replace(" ", "").replace("{", "").replace("}", "")
 				try:
 					# Decode the hex string into bytes
 					decoded_bytes = binascii.unhexlify(hex_string)
 					# Convert bytes to string using ASCII encoding
-					ascii_string = decoded_bytes.decode('ascii', 'ignore')
+					ascii_string = decoded_bytes.decode('ascii')
 					# Check if all characters are ASCII
-					if ascii_string.isprintable():
+					if all(char in acceptable_chars for char in ascii_string):
 						string_issues.append(
 							{
 								"rule": rule['rule_name'],
@@ -105,6 +108,8 @@ def analyze_strings(self, rule):
 							}
 						)
 				except binascii.Error:
+					pass
+				except UnicodeDecodeError:
 					pass
 
 			# MODIFIER ONLY ISSUES ---------------------------------------
