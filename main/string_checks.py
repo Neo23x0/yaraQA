@@ -63,6 +63,20 @@ def analyze_strings(self, rule):
 		# Run some tests that need all strings for the checks
 		string_issues.extend(check_duplicate_strings(self, rule))
 
+		# High number of strings check
+		if len(rule['strings']) > 20:
+			string_issues.append(
+				{
+					"rule": rule['rule_name'],
+					"id": "HS1",
+					"issue": "The rule contains a high number of strings.",
+					"element": f"Number of rule strings {len(rule['strings'])}",
+					"level": 1,
+					"type": "resources",
+					"recommendation": "Try to reduce the number of strings. Usually rules don't require such a high number of strings to be effective. I know it's hard, but try to sort out strings that are similar or of a similar type (e.g. many error messages, many file paths, many registry keys, etc.).",
+				}
+			)
+
 		# Loop over strings
 		for s in rule['strings']:
 
