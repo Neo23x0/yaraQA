@@ -30,6 +30,34 @@ def analyze_condition(yaraQA, rule):
 			}
 		)
 
+	# If the number of "math." functions in a condition exceeds a threshold, it is likely that the condition is too complex
+	# Check the raw condition string for occurrences of math. and count them
+	# If the number of occurrences exceeds the threshold, add an issue
+	if rule['raw_condition'].count('math.') > 3:
+		condition_issues.append(
+			{
+				"rule": rule['rule_name'],
+				"id": "CF2",
+				"issue": "The rule uses a condition that includes more than 3 mathematical calculations",
+				"element": {'condition_segment': rule['raw_condition']},
+				"level": 3,
+				"type": "performance",
+				"recommendation": "Rewrite the condition to use less mathematical calculations",
+			}
+		)
+	elif rule['raw_condition'].count('math.') > 0:
+		condition_issues.append(
+			{
+				"rule": rule['rule_name'],
+				"id": "CF2",
+				"issue": "The rule uses a condition that a mathematical calculation, which has a performance impact",
+				"element": {'condition_segment': rule['raw_condition']},
+				"level": 2,
+				"type": "performance",
+				"recommendation": "Avoid mathematical calculations in the condition",
+			}
+		)
+
 	# Problem : '2 of them' in condition but rule contains only 1 string
 	# Reason  : rule will never match
 	if 'strings' in rule:
