@@ -2,6 +2,8 @@
 String checks
 """
 
+import binascii
+
 def check_duplicate_strings(self, rule):
 	"""
 	Check for duplicate strings in the rule
@@ -79,6 +81,31 @@ def analyze_strings(self, rule):
 						"recommendation": "Try to anchor the string with a different character at the beginning or end.",
 					}
 				)
+
+			# String that is encoded as hex but can be written as text
+			if s['type'] == "byte":
+				# Remove spaces and braces
+				hex_string = s['value'].replace(" ", "").replace("{", "").replace("}", "")
+				try:
+					# Decode the hex string into bytes
+					decoded_bytes = binascii.unhexlify(hex_string)
+					# Convert bytes to string using ASCII encoding
+					ascii_string = decoded_bytes.decode('ascii', 'ignore')
+					# Check if all characters are ASCII
+					if ascii_string.isprintable():
+						string_issues.append(
+							{
+								"rule": rule['rule_name'],
+								"id": "SV2",
+								"issue": "The rule uses a string that is encoded as hex but can be written as text.",
+								"element": s,
+								"level": 1,
+								"type": "style",
+								"recommendation": "Write the string as text instead of hex and make it readable. There's absolutely no need to encode it as hex.",
+							}
+						)
+				except binascii.Error:
+					pass
 
 			# MODIFIER ONLY ISSUES ---------------------------------------
 
