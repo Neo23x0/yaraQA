@@ -100,6 +100,36 @@ def analyze_strings(self, rule):
 				}
 			)
 
+		# Evaluate number of regex values
+		regex_count = 0
+		for s in rule['strings']:
+			if s['type'] == "regex":
+				regex_count += 1
+		if regex_count > 2:
+			string_issues.append(
+				{
+					"rule": rule['rule_name'],
+					"id": "HS3",
+					"issue": "The rule contains a high number of regex strings.",
+					"element": f"Number of regex strings {regex_count}",
+					"level": 1,
+					"type": "resources",
+					"recommendation": "Try to reduce the number of regex strings. Usually rules don't require such a high number of regex strings to be effective. I know it's hard, but try to write a rule that uses less regex strings. In >90%% of the cases it's possible to write a rule without regex strings.",
+				}
+			)
+		elif regex_count > 4:
+			string_issues.append(
+				{
+					"rule": rule['rule_name'],
+					"id": "HS4",
+					"issue": "The rule contains a very high number of regex strings.",
+					"element": f"Number of regex strings {regex_count}",
+					"level": 2,
+					"type": "resources",
+					"recommendation": "Try to reduce the number of regex strings. Usually rules don't require such a high number of regex strings to be effective. I know it's hard, but try to write a rule that uses less regex strings. In >90%% of the cases it's possible to write a rule without regex strings.",
+				}
+			)
+
 		# Loop over strings
 		for s in rule['strings']:
 
