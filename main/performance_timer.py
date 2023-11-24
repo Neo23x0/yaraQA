@@ -71,7 +71,7 @@ class PerformanceTimer:
 
         # Apply the regex to the test string for the given number of iterations
         for _ in range(iterations):
-            pattern.findall(pattern, self.test_string)
+            pattern.findall(self.test_string)
 
         # Record the end time
         end_time = time.time()
