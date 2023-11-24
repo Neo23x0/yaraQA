@@ -1,11 +1,11 @@
 import sys
 import re
 import json
-import plyara
 import hashlib
 import traceback
 import logging
-from pprint import pprint
+import plyara
+#from pprint import pprint
 
 from .condition_checks import analyze_condition
 from .string_checks import analyze_strings
@@ -13,7 +13,10 @@ from .combination_checks import analyze_combinations
 from .performance_timer import PerformanceTimer
 
 class YaraQA(object):
-   
+    """
+    YARA QA Object
+    """
+
     input_files = []
 
     def __init__(self):
@@ -27,6 +30,9 @@ class YaraQA(object):
         self.performance_timer = PerformanceTimer()
 
     def initialize_regular_expressions(self):
+        """
+        Initializes the regular expressions
+        """
         # Prepare regular expressions
         logging.info("Initializing regular expressions ...")
         self.re_pdb_folder = re.compile(r'^\\.*\.(pdb|PDB)$')

@@ -1,6 +1,7 @@
 """
 This file contains the code for the performance tests.
 """
+import os
 import re
 import logging
 import time
@@ -17,7 +18,12 @@ class PerformanceTimer:
     # strings -el * >> react-os-strings.txt
     # strings ./system32/ * >> react-os-strings.txt
     # strings -el ./system32/ * >> react-os-strings.txt
-    sample_data_file = "./test/data/react-os-strings.txt.zip"
+    # Get the directory of the current file
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # Define the relative path to the data file
+    relative_path = "../test/data/react-os-strings.txt.zip"
+    # Combine the current directory with the relative path
+    sample_data_file = os.path.join(current_dir, relative_path)
 
     def __init__(self):
         # Load the sample data file, decompress the ZIP archive and load into memory
