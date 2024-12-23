@@ -2,7 +2,8 @@
 This file contains the code for the performance tests.
 """
 import os
-import re2 as re
+#import re2 as re
+import re
 import logging
 import time
 import zipfile
