@@ -1,4 +1,4 @@
 yara-python
 plyara>=2.1.0
 argparse
-pyre2
+git+https://github.com/facebook/pyre2.git@main#egg=fb-re2
