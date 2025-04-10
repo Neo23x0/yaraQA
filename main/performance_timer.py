@@ -9,7 +9,15 @@ import zipfile
 
 
 def findall_compat(pattern, text):
-    return [match.group(0) for match in pattern.finditer(text)]
+    matches = []
+    start = 0
+    while start < len(text):
+        m = pattern.Match(text, start)
+        if not m:
+            break
+        matches.append(m.group(0))
+        start = m.end() if m.end() > start else start + 1  # prevent infinite loops
+    return matches
 
 class PerformanceTimer:
     """
