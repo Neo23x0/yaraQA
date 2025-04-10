@@ -7,6 +7,10 @@ import logging
 import time
 import zipfile
 
+
+def findall_compat(pattern, text):
+    return [match.group(0) for match in pattern.finditer(text)]
+
 class PerformanceTimer:
     """
     Performance Tests
@@ -71,7 +75,8 @@ class PerformanceTimer:
 
         # Apply the regex to the test string for the given number of iterations
         for _ in range(iterations):
-            pattern.findall(self.test_string)
+            #pattern.findall(self.test_string)
+            findall_compat(pattern, self.test_string)
 
         # Record the end time
         end_time = time.time()
