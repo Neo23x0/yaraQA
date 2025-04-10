@@ -12,7 +12,7 @@ def findall_compat(pattern, text):
     matches = []
     start = 0
     while start < len(text):
-        m = pattern.Match(text, start)
+        m = pattern.match(text, start)
         if not m:
             break
         matches.append(m.group(0))
