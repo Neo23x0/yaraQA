@@ -178,6 +178,8 @@ def analyze_strings(self, rule):
 					pass
 				except UnicodeDecodeError:
 					pass
+				except ValueError:
+					pass
 
 			# MODIFIER ONLY ISSUES ---------------------------------------
 
