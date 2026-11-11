@@ -2,8 +2,26 @@
 String checks
 """
 
+import re
 import string
 import binascii
+
+def normalize_string(s):
+	"""
+	Returns a key that is equal for two strings that match the same data:
+	same type, same value (hex without whitespace, lower-cased for 'nocase' and hex)
+	and same modifiers ('ascii' is implied when neither 'ascii' nor 'wide' is set)
+	"""
+	value = s['value']
+	modifiers = list(s.get('modifiers', []))
+	if s['type'] == "byte":
+		value = re.sub(r'\s+', '', value).lower()
+	else:
+		if 'wide' not in modifiers and 'ascii' not in modifiers:
+			modifiers.append('ascii')
+		if 'nocase' in modifiers:
+			value = value.lower()
+	return (s['type'], value, tuple(sorted(modifiers)))
 
 def check_duplicate_strings(self, rule):
 	"""
@@ -12,42 +30,26 @@ def check_duplicate_strings(self, rule):
 
 	test_issues = []
 
-	# Loop over the strings once and create a list of all strings
-	string_list = []
+	# First string name seen for each normalized string
+	first_seen = {}
+
 	for s in rule['strings']:
-		string_list.append({
-			'name': s['name'],
-			'value': s['value'],
-		})
-
-	# Combinations already checked
-	strings_reported = []
-
-	# Loop over the strings again and check for duplicates
-	for s in rule['strings']:
-
-		# Duplicate strings check
-		for s2 in string_list:
-			if s['value'] == s2['value'] and s['name'] != s2['name']:
-				# Check if the combination has already been reported
-				# Modifier string
-				modifier_string = ""
-				if 'modifiers' in s:
-					modifier_string = ":".join(sorted(s['modifiers']))
-				string_with_modifiers = f""
-				if string_with_modifiers in strings_reported:
-					strings_reported.append(string_with_modifiers)
-					test_issues.append(
-						{
-							"rule": rule['rule_name'],
-							"id": "DS1",
-							"issue": "The rule contains a duplicate string",
-							"element": {'string_name': s['name'], 'string_value': s['value']},
-							"level": 2,
-							"type": "logic",
-							"recommendation": "Fix the strings",
-						}
-					)
+		key = normalize_string(s)
+		if key not in first_seen:
+			first_seen[key] = s['name']
+			continue
+		# Report every further occurrence once
+		test_issues.append(
+			{
+				"rule": rule['rule_name'],
+				"id": "DS1",
+				"issue": "The rule contains a duplicate string",
+				"element": {'string_name': s['name'], 'string_value': s['value'], 'duplicate_of': first_seen[key]},
+				"level": 2,
+				"type": "logic",
+				"recommendation": "Remove the duplicate string and update the condition if it references it",
+			}
+		)
 
 	return test_issues
 
@@ -105,19 +107,7 @@ def analyze_strings(self, rule):
 		for s in rule['strings']:
 			if s['type'] == "regex":
 				regex_count += 1
-		if regex_count > 2:
-			string_issues.append(
-				{
-					"rule": rule['rule_name'],
-					"id": "HS3",
-					"issue": "The rule contains a high number of regex strings.",
-					"element": f"Number of regex strings {regex_count}",
-					"level": 1,
-					"type": "resources",
-					"recommendation": "Try to reduce the number of regex strings. Usually rules don't require such a high number of regex strings to be effective. I know it's hard, but try to write a rule that uses less regex strings. In >90%% of the cases it's possible to write a rule without regex strings.",
-				}
-			)
-		elif regex_count > 4:
+		if regex_count > 4:
 			string_issues.append(
 				{
 					"rule": rule['rule_name'],
@@ -125,6 +115,18 @@ def analyze_strings(self, rule):
 					"issue": "The rule contains a very high number of regex strings.",
 					"element": f"Number of regex strings {regex_count}",
 					"level": 2,
+					"type": "resources",
+					"recommendation": "Try to reduce the number of regex strings. Usually rules don't require such a high number of regex strings to be effective. I know it's hard, but try to write a rule that uses less regex strings. In >90%% of the cases it's possible to write a rule without regex strings.",
+				}
+			)
+		elif regex_count > 2:
+			string_issues.append(
+				{
+					"rule": rule['rule_name'],
+					"id": "HS3",
+					"issue": "The rule contains a high number of regex strings.",
+					"element": f"Number of regex strings {regex_count}",
+					"level": 1,
 					"type": "resources",
 					"recommendation": "Try to reduce the number of regex strings. Usually rules don't require such a high number of regex strings to be effective. I know it's hard, but try to write a rule that uses less regex strings. In >90%% of the cases it's possible to write a rule without regex strings.",
 				}
