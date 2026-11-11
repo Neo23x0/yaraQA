@@ -111,9 +111,8 @@ class YaraQA(object):
 
                 # Hash statistics
                 # Add to rule hash structure for later duplicate checking
-                if not rule_hash in rule_hash_stats:
-                    rule_hash_stats[rule_hash] = []
-                    rule_hash_stats[rule_hash].append(rule['rule_name'])
+                if rule_hash:
+                    rule_hash_stats.setdefault(rule_hash, []).append(rule['rule_name'])
 
                 # Module statistics
                 if 'imports' in rule: 
@@ -376,8 +375,9 @@ def calculate_rule_hash(rule):
             # Others: strings, regex
             else: 
                 # If modifiers exist, just use them
+                # (copy the list so that the parsed rule isn't changed)
                 if 'modifiers' in s:
-                    modifiers = s['modifiers']
+                    modifiers = list(s['modifiers'])
                 # One exception: if no 'wide' modifier is set, add an 'ascii' modifier
                 if not 'wide' in modifiers and not 'ascii' in modifiers:
                     modifiers.append('ascii')
